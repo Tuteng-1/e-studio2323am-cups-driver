@@ -100,6 +100,19 @@ out=$(ctl status)
 rm -f "$FILTER_DIR/rastertoestudio" "$PPD_DIR/eSTUDIO2823AM.ppd"
 ok "status 已安装"
 
+# 只装 filter / 只装 PPD 都必须报 not-installed
+: > "$FILTER_DIR/rastertoestudio"
+rm -f "$PPD_DIR/eSTUDIO2823AM.ppd"
+out=$(ctl status)
+[ "$out" = "not-installed" ] || { echo "FAIL: 仅 filter 存在时应为 not-installed，得到 '$out'"; fail=1; }
+rm -f "$FILTER_DIR/rastertoestudio"
+
+: > "$PPD_DIR/eSTUDIO2823AM.ppd"
+out=$(ctl status)
+[ "$out" = "not-installed" ] || { echo "FAIL: 仅 PPD 存在时应为 not-installed，得到 '$out'"; fail=1; }
+rm -f "$PPD_DIR/eSTUDIO2823AM.ppd"
+ok "status 单文件缺失"
+
 # --- 纯函数：队列名校验 ---
 lib valid_queue_name foo || { echo "FAIL: 应接受 foo"; fail=1; }
 lib valid_queue_name ok-name_1 || { echo "FAIL: 应接受 ok-name_1"; fail=1; }
@@ -107,13 +120,19 @@ lib valid_queue_name -rf && { echo "FAIL: 不应接受 -rf"; fail=1; }
 lib valid_queue_name '' && { echo "FAIL: 不应接受空名"; fail=1; }
 lib valid_queue_name 'a b' && { echo "FAIL: 不应接受含空格"; fail=1; }
 lib valid_queue_name a.b && { echo "FAIL: 不应接受 a.b"; fail=1; }
+lib valid_queue_name "$(printf 'a%.0s' $(seq 1 127))" || { echo "FAIL: 127 字符应接受"; fail=1; }
+lib valid_queue_name "$(printf 'a%.0s' $(seq 1 128))" && { echo "FAIL: 128 字符应拒绝"; fail=1; }
 ok "valid_queue_name 边界"
 
 # --- 纯函数：to_uri ---
-[ "$(lib to_uri 10.0.0.5)" = "socket://10.0.0.5:9100" ] || { echo "FAIL: to_uri 裸 IP"; fail=1; }
-[ "$(lib to_uri printer.local)" = "socket://printer.local:9100" ] || { echo "FAIL: to_uri 主机名"; fail=1; }
-[ "$(lib to_uri printer:9200)" = "socket://printer:9200" ] || { echo "FAIL: to_uri 自定义端口"; fail=1; }
-[ "$(lib to_uri socket://10.0.0.5:9100)" = "socket://10.0.0.5:9100" ] || { echo "FAIL: to_uri 完整 URI"; fail=1; }
+out=$(lib to_uri 10.0.0.5) && [ "$out" = "socket://10.0.0.5:9100" ] \
+    || { echo "FAIL: to_uri 裸 IP"; fail=1; }
+out=$(lib to_uri printer.local) && [ "$out" = "socket://printer.local:9100" ] \
+    || { echo "FAIL: to_uri 主机名"; fail=1; }
+out=$(lib to_uri printer:9200) && [ "$out" = "socket://printer:9200" ] \
+    || { echo "FAIL: to_uri 自定义端口"; fail=1; }
+out=$(lib to_uri socket://10.0.0.5:9100) && [ "$out" = "socket://10.0.0.5:9100" ] \
+    || { echo "FAIL: to_uri 完整 URI"; fail=1; }
 lib to_uri ipp://h && { echo "FAIL: to_uri 应拒绝 ipp://"; fail=1; }
 lib to_uri ipss://h && { echo "FAIL: to_uri 应拒绝 ipss://"; fail=1; }
 lib to_uri http://h && { echo "FAIL: to_uri 应拒绝 http://"; fail=1; }
