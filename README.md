@@ -33,6 +33,8 @@ make test-pdf        # 真实链路：PDF → cgpdftoraster → filter（两页 
 make test-options    # PPD 选项 → PJL 行 / 纸张尺寸 / 多份结构映射
 make test-capture    # 25 份实体机抓包逐字节回归
 make test-replay     # 抓包位图还原成 raster 重放 filter，再逐字节比对（最强验证）
+make test-appctl     # 打印机管理 CLI 自测（PATH 桩，无需 root、不碰系统）
+make app             # 打包「eSTUDIO 打印机管理.app」
 ```
 
 `make test-capture` 会调用 `tools/prncheck`：它把每页的 `IMAGELEN` 分块拼回去，
@@ -62,6 +64,47 @@ sudo lpadmin -p eSTUDIO2823AM -E -v socket://192.0.2.10:9100 \
 
 USB 连接请先 `system_profiler SPUSBDataType` 确认型号，再建
 `usb://TOSHIBA/e-STUDIO2823AM` 队列。
+
+## 图形界面（推荐）
+
+```sh
+make app      # 产出 app/build/eSTUDIO 打印机管理.app
+```
+
+双击打开即可：
+
+- 安装 / 卸载驱动（卸载时可选一并删除本驱动创建的打印机）；
+- 添加打印机：填队列名（默认 `eSTUDIO2823AM`）与 IP，可选设为默认、添加后立即打印测试页；
+- 设置端口：选中已有打印机，改成新的 IP（自动补 `socket://` 与 `:9100`）；
+- 打印测试页；
+- 删除打印机：连同该队列的配置文件一起清理；
+- 查看状态：驱动是否已安装、当前有哪些本驱动的打印机及其地址。
+
+需要管理员权限的步骤会弹系统标准密码框。app 只是外壳，所有实际操作都由
+`scripts/estudioctl.sh` 完成，它也能直接命令行使用：
+
+```sh
+./scripts/estudioctl.sh status
+sudo ./scripts/estudioctl.sh install-driver
+sudo ./scripts/estudioctl.sh add eSTUDIO2823AM 192.0.2.10 --default --test
+sudo ./scripts/estudioctl.sh set-port eSTUDIO2823AM 192.0.2.20
+sudo ./scripts/estudioctl.sh testpage eSTUDIO2823AM
+sudo ./scripts/estudioctl.sh remove eSTUDIO2823AM
+sudo ./scripts/estudioctl.sh list
+sudo ./scripts/estudioctl.sh uninstall-driver [--remove-queues]
+./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10   # 只打印将执行的命令
+```
+
+### 人工测试清单
+
+1. `make app`，双击 `app/build/eSTUDIO 打印机管理.app`；未装驱动时应提示安装。
+2. 安装驱动后，「系统设置 → 打印机与扫描仪」应出现该打印机。
+3. 添加打印机（填真实 IP）→ `lpstat -v` 能看到 `socket://IP:9100`。
+4. 打印测试页 → 出纸一页。
+5. 设置端口改成另一个 IP → `lpstat -v` 显示新 URI。
+6. 删除打印机 → `lpstat -v` 不再有该队列，`/etc/cups/ppd/<名字>.ppd` 被删除。
+7. 卸载驱动 → `/usr/libexec/cups/filter/rastertoestudio` 与
+   `/Library/Printers/PPDs/Contents/Resources/eSTUDIO2823AM.ppd` 都消失。
 
 ## PPD 选项
 
@@ -115,7 +158,12 @@ tools/mkraster.c          生成测试用 CUPS raster
 tools/checkopts.sh        PPD 选项 → PJL 行映射自测
 tools/replay.py           抓包位图 → raster 重放 → 与原始打印流逐字节比对
 tools/mkpdf.py            生成测试用多页 PDF（走真实 CUPS 链路）
-scripts/install.sh        安装脚本
+scripts/estudioctl.sh     打印机管理 CLI（安装/添加/改端口/测试页/删除/卸载）
+scripts/install.sh        安装脚本（estudioctl.sh 的薄封装）
+app/main.applescript      「eSTUDIO 打印机管理.app」界面（只调 estudioctl.sh）
+scripts/build-app.sh      打包 app（osacompile + 塞入 filter/PPD/ctl）
+tools/checkappctl.sh      estudioctl.sh 自测（PATH 桩，无需 root）
+app/build/                打包产物（不入库）
 docs/protocol-notes.md    协议笔记（实测结论 + 未验证项）
 docs/capture-guide.md     Windows 抓包方案
 eSTUDIO2323AM-captures/   抓包样本与实测报告
