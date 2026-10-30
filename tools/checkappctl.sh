@@ -113,6 +113,11 @@ hasnt() {
     grep -qF -- "$1" "$LOG" && { echo "FAIL: 日志不应有: $1"; fail=1; }
     return 0
 }
+# 同 hasnt，但允许日志为空（用于“本就不该执行任何命令”的负向校验）
+hasnt_any() {
+    grep -qF -- "$1" "$LOG" 2>/dev/null && { echo "FAIL: 日志不应有: $1"; fail=1; }
+    return 0
+}
 ok()     { echo "ok   $1"; }
 
 # --- status：未安装 / 已安装 ---
@@ -262,6 +267,128 @@ hasnt "order: driver-gone"
 hasnt "lpadmin -x OtherPrinter"
 [ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] && { echo "FAIL: 驱动 PPD 未删除"; fail=1; }
 ok "uninstall-driver --remove-queues 先删队列再删驱动"
+
+# 一台队列都没有时，uninstall --remove-queues 仍应正常删驱动
+clear_log
+"$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+clear_log
+ESTUDIO_LPSTAT_EMPTY=1 "$CTL" uninstall-driver --remove-queues >/dev/null \
+    || { echo "FAIL: 无队列时 uninstall-driver --remove-queues 应成功"; fail=1; }
+[ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] && { echo "FAIL: 无队列时驱动 PPD 未删除"; fail=1; }
+ok "uninstall-driver 无队列时仍删驱动"
+
+# --- add：默认补 socket:// 与 :9100 ---
+"$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+clear_log
+"$CTL" add MyPrn 10.0.0.9 >/dev/null || { echo "FAIL: add 失败"; fail=1; }
+has "lpadmin -p MyPrn -E -v socket://10.0.0.9:9100"
+has "-P $PPD_DIR/eSTUDIO2823AM.ppd"
+has "-o printer-is-shared=false"
+hasnt "lpadmin -d MyPrn"
+hasnt "lp -d MyPrn"
+ok "add 归一化 URI 并建队列"
+
+# --- add --default --test ---
+clear_log
+"$CTL" add MyPrn 10.0.0.9 --default --test >/dev/null || { echo "FAIL: add --default --test 失败"; fail=1; }
+has "lpadmin -d MyPrn"
+has "lp -d MyPrn /etc/hosts"
+ok "add --default --test 设置默认并发测试页"
+
+# --- add 完整 URI 原样保留（含自定义端口）---
+clear_log
+"$CTL" add MyPrn "socket://host.local:9101" >/dev/null || { echo "FAIL: add 完整 URI 失败"; fail=1; }
+has "lpadmin -p MyPrn -E -v socket://host.local:9101"
+ok "add 接受完整 socket:// URI"
+
+# --- add：驱动未安装时必须拒绝 ---
+rm -f "$PPD_DIR/eSTUDIO2823AM.ppd"
+clear_log
+if "$CTL" add NoDrv 10.0.0.9 >/dev/null 2>&1; then
+    echo "FAIL: 驱动未安装时 add 应失败"; fail=1
+fi
+hasnt_any "lpadmin -p NoDrv"
+"$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+ok "add 拒绝未安装驱动"
+
+# --- add / testpage 负向与非法输入 ---
+for bad in "" "a b" "a/b" "a.b" "-x"; do
+    clear_log
+    if "$CTL" add "$bad" 10.0.0.9 >/dev/null 2>&1; then
+        echo "FAIL: 非法队列名 '$bad' 应失败"; fail=1
+    fi
+    hasnt_any "lpadmin"
+done
+clear_log
+if "$CTL" add GoodName "ipp://1.2.3.4" >/dev/null 2>&1; then
+    echo "FAIL: 非 socket scheme 应失败"; fail=1
+fi
+hasnt_any "lpadmin"
+clear_log
+if "$CTL" add GoodName 10.0.0.9 --bogus >/dev/null 2>&1; then
+    echo "FAIL: add 未知选项应失败"; fail=1
+fi
+hasnt_any "lpadmin"
+ok "add 拒绝非法队列名/scheme/选项"
+
+# --- testpage ---
+clear_log
+"$CTL" testpage MyPrn >/dev/null || { echo "FAIL: testpage 失败"; fail=1; }
+has "lp -d MyPrn /etc/hosts"
+if "$CTL" testpage "bad name" >/dev/null 2>&1; then
+    echo "FAIL: testpage 非法队列名应失败"; fail=1
+fi
+ok "testpage 发送测试页并校验队列名"
+
+# --- add --dry-run 免 root ---
+clear_log
+ESTUDIO_FAKE_UID=1000 "$CTL" add DryPrn 10.0.0.9 --dry-run >"$TMP/dry" 2>&1 \
+    || { echo "FAIL: add --dry-run（非 root）应成功"; fail=1; }
+grep -q "DRY:.*lpadmin -p DryPrn" "$TMP/dry" || { echo "FAIL: add --dry-run 未打印命令"; fail=1; }
+[ -s "$LOG" ] && { echo "FAIL: add --dry-run 不应执行外部命令"; fail=1; }
+ok "add --dry-run 免 root"
+
+# --- set-port ---
+clear_log
+"$CTL" set-port MyPrn 10.0.0.77 >/dev/null || { echo "FAIL: set-port 失败"; fail=1; }
+has "lpadmin -p MyPrn -v socket://10.0.0.77:9100"
+ok "set-port 修改端口"
+
+clear_log
+if "$CTL" set-port MyPrn "http://x" >/dev/null 2>&1; then
+    echo "FAIL: set-port 非 socket scheme 应失败"; fail=1
+fi
+if "$CTL" set-port "bad name" 10.0.0.1 >/dev/null 2>&1; then
+    echo "FAIL: set-port 非法队列名应失败"; fail=1
+fi
+hasnt_any "lpadmin"
+ok "set-port 拒绝非法输入"
+
+# --- remove：删队列 + 删 PPD 配置 ---
+clear_log
+printf 'x rastertoestudio\n' > "$CUPS_PPD_DIR/MyPrn.ppd"
+"$CTL" remove MyPrn >/dev/null || { echo "FAIL: remove 失败"; fail=1; }
+has "lpadmin -x MyPrn"
+[ -f "$CUPS_PPD_DIR/MyPrn.ppd" ] && { echo "FAIL: 队列 PPD 配置未删除"; fail=1; }
+ok "remove 删队列与 PPD 配置"
+
+# remove 幂等：lpadmin 失败也要清掉残留配置
+clear_log
+printf 'x rastertoestudio\n' > "$CUPS_PPD_DIR/MyPrn.ppd"
+ESTUDIO_LPADMIN_FAIL=1 "$CTL" remove MyPrn >/dev/null 2>&1 \
+    || { echo "FAIL: remove 应当幂等（lpadmin 失败不致命）"; fail=1; }
+[ -f "$CUPS_PPD_DIR/MyPrn.ppd" ] && { echo "FAIL: 残留 PPD 配置未清理"; fail=1; }
+ok "remove 幂等清理残留配置"
+
+# --- set-port / remove --dry-run 免 root ---
+clear_log
+ESTUDIO_FAKE_UID=1000 "$CTL" set-port MyPrn 10.0.0.1 --dry-run >"$TMP/dry" 2>&1 \
+    || { echo "FAIL: set-port --dry-run（非 root）应成功"; fail=1; }
+grep -q "DRY:.*lpadmin -p MyPrn" "$TMP/dry" || { echo "FAIL: set-port --dry-run 未打印命令"; fail=1; }
+ESTUDIO_FAKE_UID=1000 "$CTL" --dry-run remove MyPrn >/dev/null 2>&1 \
+    || { echo "FAIL: remove --dry-run（非 root）应成功"; fail=1; }
+[ -s "$LOG" ] && { echo "FAIL: dry-run 不应执行外部命令"; fail=1; }
+ok "set-port/remove --dry-run 免 root"
 
 # 删队列失败：告警 + 汇总 + 仍删驱动文件，但整体返回非 0
 clear_log

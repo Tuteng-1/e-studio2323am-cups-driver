@@ -200,6 +200,51 @@ cmd_uninstall_driver() {
     echo "驱动已卸载"
 }
 
+cmd_testpage() {
+    local name="$1"
+    valid_queue_name "$name" || die "非法队列名：$name"
+    need_root_or_dry
+    run lp -d "$name" /etc/hosts
+    echo "测试页已发送：$name"
+}
+
+cmd_add() {
+    local name="$1" target="$2" make_default="$3" do_test="$4" uri
+    valid_queue_name "$name" || die "非法队列名：$name（只允许字母数字 _ -）"
+    uri=$(to_uri "$target") || die "非法地址：$target"
+    [ -f "$PPD_DST" ] || die "驱动尚未安装，请先安装驱动"
+    need_root_or_dry
+    run lpadmin -p "$name" -E -v "$uri" -P "$PPD_DST" -o printer-is-shared=false
+    if [ "$make_default" = "yes" ]; then
+        run lpadmin -d "$name"
+    fi
+    echo "已添加打印机：$name -> $uri"
+    if [ "$do_test" = "yes" ]; then
+        cmd_testpage "$name"
+    fi
+}
+
+cmd_set_port() {
+    local name="$1" target="$2" uri
+    valid_queue_name "$name" || die "非法队列名：$name"
+    uri=$(to_uri "$target") || die "非法地址：$target"
+    need_root_or_dry
+    run lpadmin -p "$name" -v "$uri"
+    echo "端口已更新：$name -> $uri"
+}
+
+cmd_remove() {
+    local name="$1"
+    valid_queue_name "$name" || die "非法队列名：$name"
+    need_root_or_dry
+    # 幂等：队列可能已被手动删除，此时仍要清掉残留的 PPD 配置
+    if ! run_soft lpadmin -x "$name"; then
+        printf '警告: 队列不存在或删除失败，继续清理配置：%s\n' "$name" >&2
+    fi
+    run rm -f "$CUPS_PPD_DIR/$name.ppd"
+    echo "已删除打印机：$name"
+}
+
 main() {
     # --dry-run 可出现在任意位置：先统一取出，再解析子命令
     local args=() a
@@ -233,6 +278,28 @@ main() {
             esac
             [ $# -le 1 ] || die "uninstall-driver 最多接受一个选项"
             cmd_uninstall_driver "$rq" ;;
+        add)
+            [ $# -ge 2 ] || die "用法：add NAME IP [--default] [--test]"
+            local aname="$1" atarget="$2" md=no dt=no
+            shift 2
+            while [ $# -gt 0 ]; do
+                case "$1" in
+                    --default) md=yes ;;
+                    --test)    dt=yes ;;
+                    *) die "未知选项：$1" ;;
+                esac
+                shift
+            done
+            cmd_add "$aname" "$atarget" "$md" "$dt" ;;
+        testpage)
+            [ $# -eq 1 ] || die "用法：testpage NAME"
+            cmd_testpage "$1" ;;
+        set-port)
+            [ $# -eq 2 ] || die "用法：set-port NAME IP"
+            cmd_set_port "$1" "$2" ;;
+        remove)
+            [ $# -eq 1 ] || die "用法：remove NAME"
+            cmd_remove "$1" ;;
         -h|--help)
             usage; exit 0 ;;
         "")
