@@ -39,9 +39,20 @@ run() {
         printf 'DRY:'
         printf ' %q' "$@"
         printf '\n'
-    else
-        "$@"
+        return 0
     fi
+    "$@" || die "命令失败（退出码 $?）：$*"
+}
+
+# 允许失败的 run（例如 launchctl 在某些系统上返回非 0）
+run_ignore() {
+    if [ -n "$DRY" ]; then
+        printf 'DRY:'
+        printf ' %q' "$@"
+        printf '\n'
+        return 0
+    fi
+    "$@" || true
 }
 
 die() { printf '错误: %s\n' "$*" >&2; exit 1; }
@@ -50,17 +61,17 @@ need_root() {
     [ "$(id -u)" = 0 ] || die "需要管理员权限，请通过 app 或 sudo 运行"
 }
 
-# 队列名：非空、只允许 [A-Za-z0-9_-]
+# 队列名：非空、不以 - 开头、只允许 [A-Za-z0-9_-]，最长 127
 valid_queue_name() {
     case "$1" in
-        ""|*[!A-Za-z0-9_-]*) return 1 ;;
+        ""|-*|*[!A-Za-z0-9_-]*) return 1 ;;
     esac
-    return 0
+    [ "${#1}" -le 127 ]
 }
 
 # 输入 -> device URI。纯主机名/IP 补 socket:// 与 :9100；带 scheme 只接受 socket://
 to_uri() {
-    local rest
+    local rest port
     case "$1" in
         *://*)
             case "$1" in
@@ -68,13 +79,34 @@ to_uri() {
                 *) return 1 ;;
             esac
             ;;
-        *[!A-Za-z0-9._:-]*) return 1 ;;
-        *:*) rest="$1"; printf 'socket://%s' "$1"; return 0 ;;
-        *) rest="$1"; printf 'socket://%s:%s' "$1" "$DEFAULT_PORT"; return 0 ;;
+        *) rest=$1 ;;
     esac
-    [ -n "$rest" ] || return 1
-    printf 'socket://%s' "$rest"
-    return 0
+    case "$rest" in
+        ""|-*|:*|*:|*[!A-Za-z0-9._:-]*) return 1 ;;
+    esac
+    case "$rest" in
+        *:*)
+            port=${rest##*:}
+            case "$port" in ""|*[!0-9]*) return 1 ;; esac
+            printf 'socket://%s' "$rest" ;;
+        *)  printf 'socket://%s:%s' "$rest" "$DEFAULT_PORT" ;;
+    esac
+}
+
+usage() {
+    cat <<'EOF'
+用法：
+  estudioctl.sh status
+  estudioctl.sh install-driver
+  estudioctl.sh uninstall-driver [--remove-queues]
+  estudioctl.sh list
+  estudioctl.sh add NAME IP [--default] [--test]
+  estudioctl.sh set-port NAME IP
+  estudioctl.sh testpage NAME
+  estudioctl.sh remove NAME
+
+全局选项：--dry-run（只打印将执行的命令）
+EOF
 }
 
 cmd_status() {
@@ -97,12 +129,15 @@ main() {
     if [ $# -gt 0 ]; then shift; fi
 
     case "$cmd" in
-        status)   cmd_status ;;
-        ""|-h|--help)
-            sed -n '2,20p' "$0"
-            [ -n "$cmd" ] || exit 1 ;;
+        status)
+            [ $# -eq 0 ] || die "status 不接受参数：$*"
+            cmd_status ;;
+        -h|--help)
+            usage; exit 0 ;;
+        "")
+            usage >&2; exit 1 ;;
         *) die "未知子命令：$cmd" ;;
     esac
 }
 
-main "$@"
+[ "${ESTUDIO_LIB_ONLY:-}" = 1 ] || main "$@"
