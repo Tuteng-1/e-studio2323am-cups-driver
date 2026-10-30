@@ -143,5 +143,42 @@ lib to_uri 'a b' && { echo "FAIL: to_uri 应拒绝空格"; fail=1; }
 lib to_uri -x && { echo "FAIL: to_uri 应拒绝 - 开头"; fail=1; }
 ok "to_uri 边界"
 
+# --- list：只列 PPD 指向本驱动 filter 的队列 ---
+clear_log
+printf 'something rastertoestudio something\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
+out=$(ctl list)
+[ "$out" = "$(printf 'eSTUDIO2823AM\tsocket://10.0.0.5:9100')" ] \
+    || { echo "FAIL: list 输出不符：'$out'"; fail=1; }
+case "$out" in *OtherPrinter*) echo "FAIL: list 混入了无关队列"; fail=1 ;; esac
+ok "list 只列本驱动队列"
+
+# --- install-driver：真实复制到临时目录 ---
+clear_log
+"$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+[ -f "$FILTER_DIR/rastertoestudio" ] || { echo "FAIL: filter 未安装"; fail=1; }
+[ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] || { echo "FAIL: PPD 未安装"; fail=1; }
+has "chown root:wheel"
+[ "$(ctl status)" = "installed" ] || { echo "FAIL: status 应为 installed"; fail=1; }
+ok "install-driver 安装 filter+PPD，status=installed"
+
+# --- uninstall-driver --remove-queues：删文件并删除本驱动队列 ---
+clear_log
+printf 'something rastertoestudio something\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
+"$CTL" uninstall-driver --remove-queues >/dev/null || { echo "FAIL: uninstall-driver 失败"; fail=1; }
+[ -f "$FILTER_DIR/rastertoestudio" ] && { echo "FAIL: filter 未删除"; fail=1; }
+has "lpadmin -x eSTUDIO2823AM"
+[ "$(ctl status)" = "not-installed" ] || { echo "FAIL: status 应为 not-installed"; fail=1; }
+ok "uninstall-driver 删除驱动与队列"
+
+# --- dry-run：只打印，不落地 ---
+clear_log
+out=$("$CTL" --dry-run install-driver)
+case "$out" in
+    *"DRY:"*"install -m 755"*) ;;
+    *) echo "FAIL: dry-run 未打印 install 命令"; fail=1 ;;
+esac
+[ -f "$FILTER_DIR/rastertoestudio" ] && { echo "FAIL: dry-run 不应落地文件"; fail=1; }
+ok "dry-run 只打印不执行"
+
 echo "ctl 基础检查：$([ "$fail" = 0 ] && echo 全部通过 || echo 有失败)"
 exit "$fail"

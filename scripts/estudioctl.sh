@@ -117,6 +117,54 @@ cmd_status() {
     fi
 }
 
+# 输出：队列名<TAB>device URI（只列 PPD 指向本驱动 filter 的队列）
+cmd_list() {
+    local line name uri ppd
+    lpstat -v 2>/dev/null | while IFS= read -r line; do
+        case "$line" in
+            "device for "*": "*) ;;
+            *) continue ;;
+        esac
+        name=${line#device for }
+        name=${name%%:*}
+        uri=${line#*: }
+        ppd="$CUPS_PPD_DIR/$name.ppd"
+        if [ -f "$ppd" ] && grep -q "$FILTER_NAME" "$ppd" 2>/dev/null; then
+            printf '%s\t%s\n' "$name" "$uri"
+        fi
+    done
+}
+
+cmd_install_driver() {
+    [ -n "$DRY" ] || need_root
+    [ -f "$FILTER_SRC" ] || die "找不到 filter：$FILTER_SRC（先在仓库根运行 make）"
+    [ -f "$PPD_SRC" ] || die "找不到 PPD：$PPD_SRC"
+    run install -d "$FILTER_DIR"
+    run install -m 755 "$FILTER_SRC" "$FILTER_DST"
+    run chown root:wheel "$FILTER_DST"
+    run chmod 755 "$FILTER_DST"
+    run install -d "$PPD_DIR"
+    run install -m 644 "$PPD_SRC" "$PPD_DST"
+    run chown root:wheel "$PPD_DST"
+    run_ignore launchctl kickstart -k system/org.cups.cupsd
+    echo "驱动已安装：$FILTER_DST, $PPD_DST"
+}
+
+cmd_uninstall_driver() {
+    local remove_queues="$1"
+    [ -n "$DRY" ] || need_root
+    run rm -f "$FILTER_DST" "$PPD_DST"
+    if [ "$remove_queues" = "yes" ]; then
+        local name uri
+        while IFS=$'\t' read -r name uri; do
+            [ -n "$name" ] || continue
+            run lpadmin -x "$name"
+        done < <(cmd_list)
+    fi
+    run_ignore launchctl kickstart -k system/org.cups.cupsd
+    echo "驱动已卸载"
+}
+
 main() {
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -132,6 +180,12 @@ main() {
         status)
             [ $# -eq 0 ] || die "status 不接受参数：$*"
             cmd_status ;;
+        list)           cmd_list ;;
+        install-driver) cmd_install_driver ;;
+        uninstall-driver)
+            local rq=no
+            [ "${1:-}" = "--remove-queues" ] && rq=yes
+            cmd_uninstall_driver "$rq" ;;
         -h|--help)
             usage; exit 0 ;;
         "")
