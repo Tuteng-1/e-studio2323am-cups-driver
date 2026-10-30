@@ -209,10 +209,10 @@ cmd_uninstall_driver() {
     echo "驱动已卸载"
 }
 
+# 打印走普通用户身份即可（不需要 root）
 cmd_testpage() {
     local name="$1"
     valid_queue_name "$name" || die "非法队列名：$name"
-    need_root_or_dry
     run lp -d "$name" /etc/hosts
     echo "测试页已发送：$name"
 }

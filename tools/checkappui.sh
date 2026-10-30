@@ -48,7 +48,9 @@ s = s[:s.index(marker)]
 
 cap_lit = cap.replace("\\", "\\\\").replace('"', '\\"')
 ctl_stub = '''\tif args is "list" then return "TestQ" & tab & "socket://10.9.9.9:9100"
-\tdo shell script "printf '%s\\\\n' " & quoted form of args & " >> __CAP__"
+\tset cmdLine to args
+\tif admin then set cmdLine to cmdLine & " [ADMIN]"
+\tdo shell script "printf '%s\\\\n' " & quoted form of cmdLine & " >> __CAP__"
 \treturn "OK"'''.replace("__CAP__", cap_lit)
 
 subs = [
@@ -119,10 +121,11 @@ fi
 wait "$pid" || { echo "FAIL: 探针执行失败"; sed 's/^/  /' "$TMP/err"; exit 1; }
 grep -qx "done" "$TMP/out" || { echo "FAIL: 探针未正常结束：$(cat "$TMP/out")"; exit 1; }
 
-expected="add 'TestQ' '10.9.9.9' --default --test
-set-port 'TestQ' '10.9.9.9'
+# [ADMIN] = 会弹管理员密码框。只有改系统配置的操作才需要，打印测试页不需要
+expected="add 'TestQ' '10.9.9.9' --default --test [ADMIN]
+set-port 'TestQ' '10.9.9.9' [ADMIN]
 testpage 'TestQ'
-remove 'TestQ'"
+remove 'TestQ' [ADMIN]"
 
 if ! diff -u <(printf '%s\n' "$expected") "$CAP"; then
     echo "FAIL: 界面生成的 ctl 子命令与预期不符"

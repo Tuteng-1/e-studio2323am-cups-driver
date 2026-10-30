@@ -334,7 +334,8 @@ ok "add 拒绝非法队列名/scheme/选项"
 
 # --- testpage ---
 clear_log
-"$CTL" testpage MyPrn >/dev/null || { echo "FAIL: testpage 失败"; fail=1; }
+ESTUDIO_FAKE_UID=1000 "$CTL" testpage MyPrn >/dev/null \
+    || { echo "FAIL: testpage 失败（普通用户身份也应能打测试页）"; fail=1; }
 has "lp -d MyPrn /etc/hosts"
 if "$CTL" testpage "bad name" >/dev/null 2>&1; then
     echo "FAIL: testpage 非法队列名应失败"; fail=1

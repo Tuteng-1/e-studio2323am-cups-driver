@@ -116,7 +116,7 @@ end setPort
 on testPage()
 	set qname to pickQueue("选择要打印测试页的打印机：")
 	if qname is missing value then return
-	set r to ctl("testpage " & quoted form of qname, true)
+	set r to ctl("testpage " & quoted form of qname, false)
 	if r is not "" then say(r)
 end testPage
 

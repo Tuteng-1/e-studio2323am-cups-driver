@@ -89,7 +89,7 @@ make app      # 产出 app/build/eSTUDIO 打印机管理.app
 sudo ./scripts/estudioctl.sh install-driver
 sudo ./scripts/estudioctl.sh add eSTUDIO2823AM 192.0.2.10 --default --test
 sudo ./scripts/estudioctl.sh set-port eSTUDIO2823AM 192.0.2.20
-sudo ./scripts/estudioctl.sh testpage eSTUDIO2823AM
+./scripts/estudioctl.sh testpage eSTUDIO2823AM   # 打印不需要管理员权限
 sudo ./scripts/estudioctl.sh remove eSTUDIO2823AM
 sudo ./scripts/estudioctl.sh list
 sudo ./scripts/estudioctl.sh uninstall-driver [--remove-queues]
