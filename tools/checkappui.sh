@@ -94,6 +94,7 @@ s += '''on run
 \tsetPort()
 \ttestPage()
 \tremovePrinter()
+\tshowStatus()
 \treturn "done"
 end run
 '''
@@ -125,7 +126,8 @@ grep -qx "done" "$TMP/out" || { echo "FAIL: 探针未正常结束：$(cat "$TMP/
 expected="add 'TestQ' '10.9.9.9' --default --test [ADMIN]
 set-port 'TestQ' '10.9.9.9' [ADMIN]
 testpage 'TestQ'
-remove 'TestQ' [ADMIN]"
+remove 'TestQ' [ADMIN]
+status"
 
 if ! diff -u <(printf '%s\n' "$expected") "$CAP"; then
     echo "FAIL: 界面生成的 ctl 子命令与预期不符"

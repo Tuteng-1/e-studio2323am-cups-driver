@@ -37,10 +37,11 @@ echo "== 安装驱动（filter + PPD）=="
 if [ -n "$QUEUE_ADDR" ]; then
     echo "== 创建队列 eSTUDIO2823AM -> $QUEUE_ADDR =="
     "$CTL" add eSTUDIO2823AM "$QUEUE_ADDR" --default
-    if lpstat -p eSTUDIO2823AM 2>/dev/null | grep -q disabled; then
-        echo "警告：队列处于 disabled 状态，检查 lpstat -p eSTUDIO2823AM"
-    else
+    # lpstat 的输出文案会随系统语言变化，这里只看退出码
+    if lpstat -v eSTUDIO2823AM >/dev/null 2>&1; then
         echo "队列已创建。测试：lp -d eSTUDIO2823AM /etc/hosts"
+    else
+        echo "警告：队列似乎没建成，检查 lpstat -v eSTUDIO2823AM"
     fi
 else
     cat <<EOF

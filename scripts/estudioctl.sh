@@ -138,31 +138,36 @@ cmd_status() {
     fi
 }
 
+# 只认独立的 rastertoestudio，避免 notrastertoestudio 之类误匹配
+PPD_FILTER_RE="(^|[[:space:]/])$FILTER_NAME([[:space:]\"]|$)"
+
+# 从 `lpstat -v NAME` 的输出里抽 device URI。
+# 注意：lpstat 的输出文案会被本地化（macOS 上 LANG/LC_ALL 改不了），
+# 所以这里只认 URI 本身的 scheme://，不匹配任何说明文字。
+queue_uri() {
+    local out re='([a-zA-Z][a-zA-Z0-9+.-]*://[^[:space:]]*)'
+    out=$(lpstat -v "$1" 2>/dev/null) || return 1
+    [[ $out =~ $re ]] || return 1
+    printf '%s' "${BASH_REMATCH[1]}"
+}
+
 # 输出：队列名<TAB>device URI（只列 PPD 指向本驱动 filter 的队列）
+#
+# 队列清单来自 /etc/cups/ppd/*.ppd（CUPS 建立队列时写入、删除队列时删除），
+# 不解析 lpstat 的说明文字，因此在任何语言环境下都一致。
 cmd_list() {
-    local line name uri ppd out
-    if ! out=$(lpstat -v 2>/dev/null); then
-        # CUPS 在没有队列时 lpstat -v 返回 1；用 lpstat -r 区分“无队列”与“服务没起来”
-        if lpstat -r >/dev/null 2>&1; then
-            return 0
-        fi
+    local ppd name uri
+    if ! lpstat -r >/dev/null 2>&1; then
         printf '错误: 无法连接 CUPS，请确认打印服务正在运行\n' >&2
         return 1
     fi
-    printf '%s\n' "$out" | while IFS= read -r line; do
-        case "$line" in
-            "device for "*": "*) ;;
-            *) continue ;;
-        esac
-        name=${line#device for }
-        name=${name%%:*}
-        uri=${line#*: }
-        ppd="$CUPS_PPD_DIR/$name.ppd"
-        # 只认独立的 /rastertoestudio，避免 notrastertoestudio 之类误匹配
-        if [ -f "$ppd" ] &&
-           grep -Eq '(^|[[:space:]/])rastertoestudio([[:space:]"]|$)' "$ppd" 2>/dev/null; then
-            printf '%s\t%s\n' "$name" "$uri"
-        fi
+    for ppd in "$CUPS_PPD_DIR"/*.ppd; do
+        [ -f "$ppd" ] || continue
+        grep -Eq "$PPD_FILTER_RE" "$ppd" 2>/dev/null || continue
+        name=${ppd##*/}
+        name=${name%.ppd}
+        uri=$(queue_uri "$name") || continue   # 队列已被删除、只剩 PPD 残留时不列出
+        printf '%s\t%s\n' "$name" "$uri"
     done
 }
 

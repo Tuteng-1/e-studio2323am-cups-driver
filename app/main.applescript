@@ -137,12 +137,20 @@ on uninstallDriver()
 end uninstallDriver
 
 on showStatus()
-	set s to ctl("status", false)
+	if ctl("status", false) is "installed" then
+		set sText to "已安装"
+	else
+		set sText to "未安装"
+	end if
 	set qs to queueList()
-	set body to "驱动：" & s & return & "打印机：" & (count of qs) & " 台"
-	repeat with q in qs
-		set body to body & return & "  • " & (qlabel of q)
-	end repeat
+	set body to "驱动：" & sText & return & "打印机：" & (count of qs) & " 台"
+	if (count of qs) is 0 then
+		set body to body & "（可用「添加打印机」添加）"
+	else
+		repeat with q in qs
+			set body to body & return & "  •  " & (qlabel of q)
+		end repeat
+	end if
 	say(body)
 end showStatus
 

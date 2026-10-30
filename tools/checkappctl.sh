@@ -65,18 +65,26 @@ if [ "${1:-}" = "-u" ]; then echo "${ESTUDIO_FAKE_UID:-0}"; exit 0; fi
 EOF
 chmod +x "$BIN/id"
 
-# lpstat 桩：输出一个本驱动队列和一个无关队列
-#   ESTUDIO_LPSTAT_EMPTY=1 → 无任何队列（-v 返回 1，-r 正常）
-#   ESTUDIO_LPSTAT_FAIL=1  → CUPS 服务不可用（-v 与 -r 都失败）
+# lpstat 桩：故意输出**中文**（真实 macOS 就是这样，LANG/LC_ALL 改不掉），
+# 以此保证 estudioctl.sh 不依赖 lpstat 的说明文字。
+#   ESTUDIO_LPSTAT_FAIL=1 → CUPS 服务不可用（-v 与 -r 都失败）
 cat > "$BIN/lpstat" <<'EOF'
 #!/bin/bash
 [ "${ESTUDIO_LPSTAT_FAIL:-0}" = 1 ] && { echo "lpstat: error" >&2; exit 1; }
 case "${1:-}" in
-    -r) echo "scheduler is running"; exit 0 ;;
+    -r) echo "调度程序正在运行"; exit 0 ;;
+    -v)
+        shift
+        case "${1:-}" in
+            "")                # 无参：列出全部
+                printf '用于eSTUDIO2823AM的设备：socket://10.0.0.5:9100\n'
+                printf '用于OtherPrinter的设备：ipp://x/y\n'
+                exit 0 ;;
+            eSTUDIO2823AM)     printf '用于eSTUDIO2823AM的设备：socket://10.0.0.5:9100\n'; exit 0 ;;
+            *)                 printf 'lpstat：列表“%s”中的目的位置名称无效。\n' "$1" >&2; exit 1 ;;
+        esac ;;
 esac
-[ "${ESTUDIO_LPSTAT_EMPTY:-0}" = 1 ] && exit 1
-printf 'device for eSTUDIO2823AM: socket://10.0.0.5:9100\n'
-printf 'device for OtherPrinter: ipp://x/y\n'
+exit 1
 EOF
 chmod +x "$BIN/lpstat"
 
@@ -177,6 +185,12 @@ lib to_uri 'a b' && { echo "FAIL: to_uri 应拒绝空格"; fail=1; }
 lib to_uri -x && { echo "FAIL: to_uri 应拒绝 - 开头"; fail=1; }
 ok "to_uri 边界"
 
+# --- queue_uri：lpstat 输出被本地化（中文、全角冒号）也要能抽出 URI ---
+u=$(lib queue_uri eSTUDIO2823AM) || { echo "FAIL: queue_uri 在中文输出下应成功"; fail=1; }
+[ "$u" = "socket://10.0.0.5:9100" ] || { echo "FAIL: queue_uri 抽出 '$u'"; fail=1; }
+lib queue_uri NoSuchQueue && { echo "FAIL: queue_uri 对不存在的队列应失败"; fail=1; }
+ok "queue_uri 不依赖 lpstat 文案（中文输出）"
+
 # --- list：只列 PPD 指向本驱动 filter 的队列 ---
 clear_log
 printf '*cupsFilter: "application/vnd.cups-raster 0 rastertoestudio"\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
@@ -193,9 +207,18 @@ out=$(ctl list)
 [ -z "$out" ] || { echo "FAIL: PPD 不含本驱动 filter 时不应列出：'$out'"; fail=1; }
 ok "list 忽略不含本驱动 filter 的 PPD"
 
-# 一台打印机都没有时：list 必须成功且输出为空（CUPS 的 lpstat -v 此时返回 1）
+# 队列已被删除、只剩 PPD 残留：不列出
 clear_log
-out=$(ESTUDIO_LPSTAT_EMPTY=1 "$CTL" list); rc=$?
+rm -f "$CUPS_PPD_DIR"/*.ppd
+printf 'x rastertoestudio\n' > "$CUPS_PPD_DIR/StaleQueue.ppd"
+out=$(ctl list)
+[ -z "$out" ] || { echo "FAIL: 残留 PPD（队列已不存在）不应列出：'$out'"; fail=1; }
+ok "list 跳过只剩 PPD 的残留队列"
+
+# 一台打印机都没有时：list 必须成功且输出为空
+clear_log
+rm -f "$CUPS_PPD_DIR"/*.ppd
+out=$(ctl list); rc=$?
 [ "$rc" = 0 ] || { echo "FAIL: 无队列时 list 应成功，得到 rc=$rc"; fail=1; }
 [ -z "$out" ] || { echo "FAIL: 无队列时 list 应输出空，得到 '$out'"; fail=1; }
 ok "list 无队列时返回空"
@@ -272,8 +295,9 @@ ok "uninstall-driver --remove-queues 先删队列再删驱动"
 # 一台队列都没有时，uninstall --remove-queues 仍应正常删驱动
 clear_log
 "$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+rm -f "$CUPS_PPD_DIR"/*.ppd
 clear_log
-ESTUDIO_LPSTAT_EMPTY=1 "$CTL" uninstall-driver --remove-queues >/dev/null \
+"$CTL" uninstall-driver --remove-queues >/dev/null \
     || { echo "FAIL: 无队列时 uninstall-driver --remove-queues 应成功"; fail=1; }
 [ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] && { echo "FAIL: 无队列时驱动 PPD 未删除"; fail=1; }
 ok "uninstall-driver 无队列时仍删驱动"
