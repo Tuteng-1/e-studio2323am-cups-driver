@@ -5,6 +5,7 @@
 #   make test-capture   用 25 个实体机抓包做逐字节回归（最强验证）
 #   make test-pdf       真实 PDF → cgpdftoraster → filter 自测
 #   make test-appctl    打印机管理 CLI（estudioctl）自测（无需 root）
+#   make test-appui     界面（main.applescript）无头自测（不弹窗、无需 root）
 #   make app            打包「eSTUDIO 打印机管理.app」
 #   sudo make install   安装 filter + PPD
 
@@ -103,6 +104,10 @@ test-replay: $(FILTER) $(PRNCHECK)
 test-appctl:
 	./tools/checkappctl.sh ./scripts/estudioctl.sh
 
+# 界面无头自测：把弹窗换成桩，断言 addPrinter/setPort/testPage/removePrinter 拼出的 ctl 子命令
+test-appui:
+	./tools/checkappui.sh ./app/main.applescript
+
 # 打包图形界面「eSTUDIO 打印机管理.app」
 app: $(FILTER)
 	sh scripts/build-app.sh
@@ -121,4 +126,4 @@ test-pdf: $(FILTER) $(PRNCHECK)
 clean:
 	rm -f $(FILTER) $(PRNCHECK) $(MKRASTER)
 
-.PHONY: all install uninstall check test test-capture test-pdf test-options test-replay test-appctl app clean
+.PHONY: all install uninstall check test test-capture test-pdf test-options test-replay test-appctl test-appui app clean

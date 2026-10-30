@@ -34,6 +34,7 @@ make test-options    # PPD 选项 → PJL 行 / 纸张尺寸 / 多份结构映�
 make test-capture    # 25 份实体机抓包逐字节回归
 make test-replay     # 抓包位图还原成 raster 重放 filter，再逐字节比对（最强验证）
 make test-appctl     # 打印机管理 CLI 自测（PATH 桩，无需 root、不碰系统）
+make test-appui      # 界面自测（弹窗换成桩，断言拼出的 ctl 子命令）
 make app             # 打包「eSTUDIO 打印机管理.app」
 ```
 
@@ -163,6 +164,7 @@ scripts/install.sh        安装脚本（estudioctl.sh 的薄封装）
 app/main.applescript      「eSTUDIO 打印机管理.app」界面（只调 estudioctl.sh）
 scripts/build-app.sh      打包 app（osacompile + 塞入 filter/PPD/ctl）
 tools/checkappctl.sh      estudioctl.sh 自测（PATH 桩，无需 root）
+tools/checkappui.sh       界面自测（弹窗换桩，校验 ctl 子命令拼装）
 app/build/                打包产物（不入库）
 docs/protocol-notes.md    协议笔记（实测结论 + 未验证项）
 docs/capture-guide.md     Windows 抓包方案
