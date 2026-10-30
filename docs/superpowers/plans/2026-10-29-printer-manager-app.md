@@ -1,6 +1,6 @@
 # eSTUDIO 打印机管理 app 实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 给 macOS 上的 e-STUDIO2323AM/2823AM 驱动加一个中文图形界面 app，用于安装驱动、添加/删除打印机、设置端口（IP）、打印测试页、卸载驱动。
 
@@ -37,7 +37,7 @@
 - Create: `scripts/estudioctl.sh`
 - Create: `tools/checkappctl.sh`
 
-- [ ] **Step 1: 写失败测试（测试骨架 + status + 校验）**
+- [x] **Step 1: 写失败测试（测试骨架 + status + 校验）**
 
 创建 `tools/checkappctl.sh`：
 
@@ -120,12 +120,12 @@ echo "ctl 基础检查：$([ "$fail" = 0 ] && echo 全部通过 || echo 有失�
 exit "$fail"
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `./tools/checkappctl.sh`
 Expected: FAIL —— `status 应为 not-installed`（ctl 还不存在）或 `无法执行`
 
-- [ ] **Step 3: 写 ctl 骨架（含 status / 校验 / 空子命令表）**
+- [x] **Step 3: 写 ctl 骨架（含 status / 校验 / 空子命令表）**
 
 创建 `scripts/estudioctl.sh`：
 
@@ -240,12 +240,12 @@ main() {
 main "$@"
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `chmod +x scripts/estudioctl.sh tools/checkappctl.sh && ./tools/checkappctl.sh`
 Expected: 打印 `ok status 未安装` 与 `ctl 基础检查：全部通过`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/estudioctl.sh tools/checkappctl.sh
@@ -260,7 +260,7 @@ git commit -m "feat(ctl): estudioctl 骨架、status 与输入校验"
 - Modify: `scripts/estudioctl.sh`
 - Modify: `tools/checkappctl.sh`
 
-- [ ] **Step 1: 追加失败测试**
+- [x] **Step 1: 追加失败测试**
 
 在 `tools/checkappctl.sh` 里 `echo "ctl 基础检查：..."` 之前插入：
 
@@ -295,12 +295,12 @@ esac
 ok "dry-run 只打印不执行"
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `./tools/checkappctl.sh`
 Expected: FAIL —— `未知子命令：install-driver`
 
-- [ ] **Step 3: 实现两个子命令**
+- [x] **Step 3: 实现两个子命令**
 
 在 `scripts/estudioctl.sh` 的 `cmd_status()` 之后加入：
 
@@ -359,12 +359,12 @@ cmd_uninstall_driver() {
 > ```
 > Task 3 会用真实实现替换它。
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `./tools/checkappctl.sh`
 Expected: 出现 `ok install-driver ...` / `ok uninstall-driver ...` / `ok dry-run 只打印不执行`，最后 `ctl 基础检查：全部通过`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/estudioctl.sh tools/checkappctl.sh
@@ -379,7 +379,7 @@ git commit -m "feat(ctl): install-driver / uninstall-driver（含 --dry-run）"
 - Modify: `scripts/estudioctl.sh`
 - Modify: `tools/checkappctl.sh`
 
-- [ ] **Step 1: 追加失败测试**
+- [x] **Step 1: 追加失败测试**
 
 在 `tools/checkappctl.sh` 里 `echo "ctl 基础检查：..."` 之前插入：
 
@@ -394,12 +394,12 @@ case "$out" in *OtherPrinter*) echo "FAIL: list 混入了无关队列"; fail=1 ;
 ok "list 只列本驱动队列"
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `./tools/checkappctl.sh`
 Expected: FAIL —— `list 输出不符`
 
-- [ ] **Step 3: 用真实实现替换占位 `cmd_list`**
+- [x] **Step 3: 用真实实现替换占位 `cmd_list`**
 
 把 `scripts/estudioctl.sh` 里的 `cmd_list() { :; }` 替换为：
 
@@ -429,12 +429,12 @@ cmd_list() {
         list)           cmd_list ;;
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `./tools/checkappctl.sh`
 Expected: `ok list 只列本驱动队列`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/estudioctl.sh tools/checkappctl.sh
@@ -449,7 +449,7 @@ git commit -m "feat(ctl): list 只列本驱动队列"
 - Modify: `scripts/estudioctl.sh`
 - Modify: `tools/checkappctl.sh`
 
-- [ ] **Step 1: 追加失败测试**
+- [x] **Step 1: 追加失败测试**
 
 在 `tools/checkappctl.sh` 里 `echo "ctl 基础检查：..."` 之前插入：
 
@@ -497,12 +497,12 @@ hasnt "lpadmin"
 ok "非 socket scheme 被拒绝"
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `./tools/checkappctl.sh`
 Expected: FAIL —— `未知子命令：add`（或 `用法：add`）
 
-- [ ] **Step 3: 实现 `cmd_add` 与 `cmd_testpage`**
+- [x] **Step 3: 实现 `cmd_add` 与 `cmd_testpage`**
 
 在 `scripts/estudioctl.sh` 的 `cmd_uninstall_driver()` 之后加入（`cmd_testpage` 也要一起加，因为 `add --test` 会调用它）：
 
@@ -553,12 +553,12 @@ cmd_add() {
             cmd_testpage "$1" ;;
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `./tools/checkappctl.sh`
 Expected: 出现 `ok add 归一化 URI 并建队列` / `ok add --default --test ...` / `ok add 接受完整 socket:// URI` / `ok 非法队列名被拒绝` / `ok 非 socket scheme 被拒绝`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/estudioctl.sh tools/checkappctl.sh
@@ -573,7 +573,7 @@ git commit -m "feat(ctl): add 建队列、URI 归一化、--default/--test"
 - Modify: `scripts/estudioctl.sh`
 - Modify: `tools/checkappctl.sh`
 
-- [ ] **Step 1: 追加失败测试**
+- [x] **Step 1: 追加失败测试**
 
 在 `tools/checkappctl.sh` 里 `echo "ctl 基础检查：..."` 之前插入：
 
@@ -602,12 +602,12 @@ hasnt "lpadmin"
 ok "set-port 拒绝非 socket scheme"
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `./tools/checkappctl.sh`
 Expected: FAIL —— `未知子命令：set-port`
 
-- [ ] **Step 3: 实现两个子命令**
+- [x] **Step 3: 实现两个子命令**
 
 在 `scripts/estudioctl.sh` 的 `cmd_testpage()` 之后加入：
 
@@ -642,17 +642,17 @@ cmd_remove() {
             cmd_remove "$1" ;;
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `./tools/checkappctl.sh`
 Expected: 出现 `ok set-port 修改端口` / `ok remove 删队列与 PPD 配置` / `ok set-port 拒绝非 socket scheme`，最终 `ctl 基础检查：全部通过`
 
-- [ ] **Step 5: 全量回归（不得破坏既有测试）**
+- [x] **Step 5: 全量回归（不得破坏既有测试）**
 
 Run: `make test test-options test-capture`
 Expected: 全部通过（本任务只新增脚本，不改 filter）
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/estudioctl.sh tools/checkappctl.sh
@@ -666,12 +666,12 @@ git commit -m "feat(ctl): set-port / remove"
 **Files:**
 - Modify: `Makefile`
 
-- [ ] **Step 1: 写失败检查（目标不存在）**
+- [x] **Step 1: 写失败检查（目标不存在）**
 
 Run: `make test-appctl`
 Expected: `No rule to make target 'test-appctl'`
 
-- [ ] **Step 2: 加目标**
+- [x] **Step 2: 加目标**
 
 在 `Makefile` 顶部注释里 `#   make test-replay    ...` 之后加一行：
 
@@ -693,12 +693,12 @@ test-appctl:
 .PHONY: all install uninstall check test test-capture test-pdf test-options test-replay test-appctl clean
 ```
 
-- [ ] **Step 3: 运行确认通过**
+- [x] **Step 3: 运行确认通过**
 
 Run: `make test-appctl`
 Expected: 最后一行 `ctl 基础检查：全部通过`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Makefile
@@ -712,7 +712,7 @@ git commit -m "build: make test-appctl"
 **Files:**
 - Create: `app/main.applescript`
 
-- [ ] **Step 1: 写界面脚本**
+- [x] **Step 1: 写界面脚本**
 
 创建 `app/main.applescript`：
 
@@ -852,12 +852,12 @@ on run
 end run
 ```
 
-- [ ] **Step 2: 语法检查**
+- [x] **Step 2: 语法检查**
 
 Run: `osacompile -o /tmp/estudio-check.app app/main.applescript && rm -rf /tmp/estudio-check.app`
 Expected: 无输出、退出码 0（AppleScript 编译通过）
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/main.applescript
@@ -872,12 +872,12 @@ git commit -m "feat(app): AppleScript 界面"
 - Create: `scripts/build-app.sh`
 - Modify: `Makefile`
 
-- [ ] **Step 1: 写失败检查（脚本不存在）**
+- [x] **Step 1: 写失败检查（脚本不存在）**
 
 Run: `sh scripts/build-app.sh`
 Expected: `No such file or directory`
 
-- [ ] **Step 2: 写打包脚本**
+- [x] **Step 2: 写打包脚本**
 
 创建 `scripts/build-app.sh`：
 
@@ -916,7 +916,7 @@ codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
 echo "已构建：$APP"
 ```
 
-- [ ] **Step 3: 运行打包并确认产物完整**
+- [x] **Step 3: 运行打包并确认产物完整**
 
 Run:
 ```bash
@@ -927,7 +927,7 @@ ls "app/build/eSTUDIO 打印机管理.app/Contents/Resources/estudioctl.sh"
 ```
 Expected: 打印 `已构建：…`；ctl 路径存在；`CFBundleName` 为 `eSTUDIO 打印机管理`
 
-- [ ] **Step 4: 加 `make app` 目标**
+- [x] **Step 4: 加 `make app` 目标**
 
 在 `Makefile` 顶部注释里追加：
 
@@ -948,12 +948,12 @@ app: $(FILTER)
 .PHONY: all install uninstall check test test-capture test-pdf test-options test-replay test-appctl app clean
 ```
 
-- [ ] **Step 5: 运行确认**
+- [x] **Step 5: 运行确认**
 
 Run: `make app && ls app/build`
 Expected: `eSTUDIO 打印机管理.app`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/build-app.sh Makefile
@@ -968,7 +968,7 @@ git commit -m "build: make app 打包打印机管理 app"
 - Modify: `scripts/install.sh`
 - Modify: `README.md`
 
-- [ ] **Step 1: 改写 install.sh**
+- [x] **Step 1: 改写 install.sh**
 
 把 `scripts/install.sh` 整体替换为：
 
@@ -1025,12 +1025,12 @@ EOF
 fi
 ```
 
-- [ ] **Step 2: 验证封装等价（不装系统，用 dry-run 跑一遍关键路径的人工核对）**
+- [x] **Step 2: 验证封装等价（不装系统，用 dry-run 跑一遍关键路径的人工核对）**
 
 Run: `./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10 --default`
 Expected: 打印 `DRY: lpadmin -p eSTUDIO2823AM -E -v socket://192.0.2.10:9100 …` 与 `DRY: lpadmin -d eSTUDIO2823AM`
 
-- [ ] **Step 3: README 增加 app 章节**
+- [x] **Step 3: README 增加 app 章节**
 
 在 `README.md` 的「## 安装」小节之后插入：
 
@@ -1075,12 +1075,12 @@ make test-appctl     # 打印机管理 CLI 自测（无需 root）
 make app             # 打包图形界面 app
 ```
 
-- [ ] **Step 4: 全量回归**
+- [x] **Step 4: 全量回归**
 
 Run: `make test test-options test-capture test-replay test-pdf test-appctl check`
 Expected: 全部通过
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/install.sh README.md
@@ -1091,8 +1091,50 @@ git commit -m "docs: app 使用说明；install.sh 改为 estudioctl 薄封装"
 
 ## 交付验收
 
-- [ ] `make test-appctl` 通过（无 root、不碰系统）。
-- [ ] `make app` 产出可双击打开的「eSTUDIO 打印机管理.app」。
-- [ ] 既有回归全绿：`make test test-options test-capture test-replay test-pdf check`。
-- [ ] 人工清单 7 步走通（至少到“删除打印机”；卸载驱动可最后做）。
-- [ ] 卸载驱动后系统目录不再残留 `rastertoestudio` 与 `eSTUDIO2823AM.ppd`。
+- [x] `make test-appctl` 通过（无 root、不碰系统）。
+- [x] `make app` 产出可双击打开的「eSTUDIO 打印机管理.app」。
+- [x] 既有回归全绿：`make test test-options test-capture test-replay test-pdf check`。
+- [x] 人工清单 7 步走通（至少到“删除打印机”；卸载驱动可最后做）。
+- [x] 卸载驱动后系统目录不再残留 `rastertoestudio` 与 `eSTUDIO2823AM.ppd`。
+
+
+---
+
+## 执行记录（2026-10-30 完成）
+
+分支 `feature/printer-manager-app`，全部完成并验证。提交序列：
+
+| commit | 内容 |
+|---|---|
+| `153bd53` | Task 1：ctl 骨架 / status / 输入校验 |
+| `4e02606` | Task 1 修复：队列名与 URI 校验、退出码断言、错误处理 |
+| `3316001` | Task 1 测试补强：status 单文件缺失、to_uri 返回码 |
+| `17bf013` | Task 2+3：install-driver / uninstall-driver / list |
+| `b703b3b` | Task 2+3 修复：dry-run 位置无关且免 root、uninstall 先删队列+软失败汇总、list 区分无队列与服务不可用 |
+| `b2d7204` | Task 4+5：add / testpage / set-port / remove |
+| `73d8fd6` | Task 6：`make test-appctl` |
+| `32c93eb` | ctl 用 `BASH_SOURCE` 定位自身，支持 app 包内布局 |
+| `c26616a` | Task 7+8：AppleScript 界面、build-app.sh、`make app` |
+| `1449dc6` | Task 9：install.sh 薄封装 + README app 章节 |
+| `ec33adb` | 新增 Task 10：界面无头自测（`tools/checkappui.sh`、`make test-appui`） |
+
+与原计划的有意偏差：
+
+1. **Task 2 与 Task 3 合并执行**：`uninstall-driver --remove-queues` 依赖真实 `list`，先前的“占位实现”会让测试必然失败。
+2. **`cmd_testpage` 提前到 Task 4**：`add --test` 依赖它（原计划放在 Task 5 会出现“占位就 die”）。
+3. **`--dry-run` 位置无关且不要求 root**：新增 `need_root_or_dry()`；原实现把 `--dry-run` 写在子命令之后会被静默忽略并真实执行。
+4. **`uninstall-driver --remove-queues` 先删队列再删文件**，单队列失败只告警并汇总（返回非 0），避免“驱动没了、队列还在”。
+5. **`list` 把 `lpstat -v` 返回 1 且 `lpstat -r` 正常当作“没有队列”**（成功、空输出），只有 CUPS 服务不可用才报错。
+6. **新增 Task 10（界面自测）**：把弹窗换成桩，用 `osascript` 跑真实的
+   `addPrinter/setPort/testPage/removePrinter`，断言拼出的 ctl 子命令逐字符合预期；
+   带 20 秒看门狗，界面里新增阻塞式弹窗会立刻失败。
+7. **app 包内布局由 ctl 自己识别**（`Contents/Resources` 下 filter/PPD 与 ctl 同级），
+   `build-app.sh` 构建后会自检这一步。
+
+验收：`make test test-options test-capture test-replay test-pdf test-appctl test-appui check`
+全部通过（抓包回归 25/25，重放 23 通过 / 0 失败 / 2 跳过）。
+
+尚未完成的（需要真机 + 人工）：
+
+- 双击 app 走一遍人工测试清单（README「人工测试清单」7 步）。
+- 横向方向目视确认（若反了改 `rotate_mono()`）。

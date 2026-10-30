@@ -93,7 +93,8 @@ sudo ./scripts/estudioctl.sh testpage eSTUDIO2823AM
 sudo ./scripts/estudioctl.sh remove eSTUDIO2823AM
 sudo ./scripts/estudioctl.sh list
 sudo ./scripts/estudioctl.sh uninstall-driver [--remove-queues]
-./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10   # 只打印将执行的命令
+./scripts/estudioctl.sh --dry-run install-driver                  # 只打印将执行的命令
+sudo ./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10   # 需已安装驱动
 ```
 
 ### 人工测试清单
