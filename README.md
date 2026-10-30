@@ -22,7 +22,7 @@ PDF/图片 → cupsfilter → CUPS raster → rastertoestudio → PJL + JBIG →
 | 多页 / 多份 | ✅ 与驱动相同的 `COPYEND` 作业重复方式，`make test-replay` 逐字节通过 |
 | 横向 | ⚠️ 已实现旋转 + `ORIENTATION=LANDSCAPE`，方向待上机确认 |
 | 双面 | ➖ 机器本身没有自动双面单元；始终单面（`DUPLEX=OFF`），PPD 不再提供该选项 |
-| 实机打印 | ✅ 2026-10-29 把 filter 生成的一页 A4 直发 9100，TopAccess 打印计数 45002 → 45003（纸面位置/方向待目视确认） |
+| 实机打印 | ✅ 2026-10-29 把 filter 生成的一页 A4 直发 9100；2026-10-30 走完整链路（app 装驱动 → 建 `socket://192.0.2.10:9100` 队列 → 打印测试页）出纸正常，TopAccess 打印计数 45003 → 45009 |
 
 ## 构建与自测
 
@@ -99,14 +99,19 @@ sudo ./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10   # 需已�
 
 ### 人工测试清单
 
-1. `make app`，双击 `app/build/eSTUDIO 打印机管理.app`；未装驱动时应提示安装。
-2. 安装驱动后，「系统设置 → 打印机与扫描仪」应出现该打印机。
-3. 添加打印机（填真实 IP）→ `lpstat -v` 能看到 `socket://IP:9100`。
-4. 打印测试页 → 出纸一页。
-5. 设置端口改成另一个 IP → `lpstat -v` 显示新 URI。
-6. 删除打印机 → `lpstat -v` 不再有该队列，`/etc/cups/ppd/<名字>.ppd` 被删除。
-7. 卸载驱动 → `/usr/libexec/cups/filter/rastertoestudio` 与
+1. ✅ `make app`，双击 `app/build/eSTUDIO 打印机管理.app`；未装驱动时提示安装。
+2. ✅ 安装驱动后，「系统设置 → 打印机与扫描仪」出现该打印机。
+3. ✅ 添加打印机（填真实 IP）→ `./scripts/estudioctl.sh list` 显示
+   `eSTUDIO2823AM	socket://192.0.2.10:9100`，且被设为默认打印机。
+4. ✅ 打印测试页 → 出纸一页（2026-10-30 实测）。
+5. ⬜ 设置端口改成另一个 IP → `list` 显示新 URI。
+6. ⬜ 删除打印机 → `list` 不再有该队列，`/etc/cups/ppd/<名字>.ppd` 被删除。
+7. ⬜ 卸载驱动 → `/usr/libexec/cups/filter/rastertoestudio` 与
    `/Library/Printers/PPDs/Contents/Resources/eSTUDIO2823AM.ppd` 都消失。
+
+> 第 1–4 步已在 macOS + e-STUDIO2323AM（`192.0.2.10`，序列号 CPGM00000）上实测通过；
+> 第 5–7 步的等价逻辑由 `make test-appctl` 覆盖（PATH 桩，验证命令构造与副作用），
+> 但还没有在真机上走一遍。
 
 ## PPD 选项
 

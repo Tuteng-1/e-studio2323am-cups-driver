@@ -1134,7 +1134,21 @@ git commit -m "docs: app 使用说明；install.sh 改为 estudioctl 薄封装"
 验收：`make test test-options test-capture test-replay test-pdf test-appctl test-appui check`
 全部通过（抓包回归 25/25，重放 23 通过 / 0 失败 / 2 跳过）。
 
-尚未完成的（需要真机 + 人工）：
+真机实测（2026-10-30，macOS + e-STUDIO2323AM `192.0.2.10`）：
 
-- 双击 app 走一遍人工测试清单（README「人工测试清单」7 步）。
+- ✅ 双击 app → 安装驱动 → 添加打印机（默认 `eSTUDIO2823AM` / `socket://192.0.2.10:9100`）
+  → 打印测试页，出纸正常；TopAccess 打印计数 45003 → 45009。
+- ✅ `estudioctl.sh list` 在真实机器上正确列出队列。
+
+真机实测暴露并修复的真实缺陷（单测/桩测当时没覆盖到）：
+
+1. **`list` 依赖 `lpstat` 的英文文案**：macOS 的 `lpstat` 会被本地化成
+   `用于NAME的设备：URI`，且 `LANG`/`LC_ALL` 改不动 → 界面显示「0 台」。
+   改为从 `/etc/cups/ppd/*.ppd` 取队列清单、只按 `scheme://` 正则取 URI。
+2. **打印测试页错误地要求管理员权限**：`lp` 用普通用户即可，改为不要求 root
+   （否则作业属于 root）。
+
+尚未验证：
+
+- 设置端口 / 删除打印机 / 卸载驱动 尚未在真机上走一遍（等价逻辑有 `make test-appctl` 覆盖）。
 - 横向方向目视确认（若反了改 `rotate_mono()`）。
