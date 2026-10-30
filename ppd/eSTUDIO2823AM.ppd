@@ -1,0 +1,158 @@
+*PPD-Adobe: "4.3"
+*FormatVersion: "4.3"
+*FileVersion: "2.0"
+*LanguageVersion: English
+*LanguageEncoding: ISOLatin1
+*PCFileName: "ESTD2823.PPD"
+*Manufacturer: "TOSHIBA"
+*Product: "(e-STUDIO2323AM/2823AM)"
+*ModelName: "TOSHIBA e-STUDIO2323AM/2823AM"
+*ShortNickName: "TOSHIBA e-STUDIO2823AM"
+*NickName: "TOSHIBA e-STUDIO2323AM/2823AM (native, PJL+JBIG)"
+*PSVersion: "(3010.000) 0"
+*LanguageLevel: "3"
+*ColorDevice: False
+*DefaultColorSpace: Gray
+*FileSystem: False
+*Throughput: "28"
+*LandscapeOrientation: Plus90
+*TTRasterizer: Type42
+*cupsVersion: 2.2
+*cupsManualCopies: True
+*cupsModelNumber: 1
+*cupsFilter: "application/vnd.cups-raster 0 rastertoestudio"
+
+*OpenUI *PageSize/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageSize
+*DefaultPageSize: A4
+*PageSize A4/A4: "<</PageSize[595.28 841.89]/ImagingBBox null>>setpagedevice"
+*PageSize A5/A5: "<</PageSize[419.53 595.28]/ImagingBBox null>>setpagedevice"
+*PageSize A3/A3: "<</PageSize[841.89 1190.55]/ImagingBBox null>>setpagedevice"
+*PageSize B4/B4 (JIS): "<</PageSize[728.50 1031.81]/ImagingBBox null>>setpagedevice"
+*PageSize B5/B5 (JIS): "<</PageSize[515.91 728.50]/ImagingBBox null>>setpagedevice"
+*PageSize Letter/US Letter: "<</PageSize[612 792]/ImagingBBox null>>setpagedevice"
+*PageSize Legal/US Legal: "<</PageSize[612 1008]/ImagingBBox null>>setpagedevice"
+*PageSize Tabloid/Ledger (11x17): "<</PageSize[792 1224]/ImagingBBox null>>setpagedevice"
+*PageSize Statement/Statement (5.5x8.5): "<</PageSize[396 612]/ImagingBBox null>>setpagedevice"
+*PageSize FanFoldGermanLegal/13 inch Legal: "<</PageSize[612 936]/ImagingBBox null>>setpagedevice"
+*PageSize Env10/Envelope #10: "<</PageSize[297 684]/ImagingBBox null>>setpagedevice"
+*PageSize EnvDL/Envelope DL: "<</PageSize[311.81 623.62]/ImagingBBox null>>setpagedevice"
+*PageSize EnvC5/Envelope C5: "<</PageSize[459.21 649.13]/ImagingBBox null>>setpagedevice"
+*PageSize EnvMonarch/Envelope Monarch: "<</PageSize[278.93 540]/ImagingBBox null>>setpagedevice"
+*PageSize Postcard/Post Card (100x148): "<</PageSize[283.46 419.53]/ImagingBBox null>>setpagedevice"
+*PageSize 8.5x8.5/8.5 inch Square: "<</PageSize[612 612]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageSize
+
+*OpenUI *PageRegion/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageRegion
+*DefaultPageRegion: A4
+*PageRegion A4/A4: "<</PageSize[595.28 841.89]/ImagingBBox null>>setpagedevice"
+*PageRegion A5/A5: "<</PageSize[419.53 595.28]/ImagingBBox null>>setpagedevice"
+*PageRegion A3/A3: "<</PageSize[841.89 1190.55]/ImagingBBox null>>setpagedevice"
+*PageRegion B4/B4 (JIS): "<</PageSize[728.50 1031.81]/ImagingBBox null>>setpagedevice"
+*PageRegion B5/B5 (JIS): "<</PageSize[515.91 728.50]/ImagingBBox null>>setpagedevice"
+*PageRegion Letter/US Letter: "<</PageSize[612 792]/ImagingBBox null>>setpagedevice"
+*PageRegion Legal/US Legal: "<</PageSize[612 1008]/ImagingBBox null>>setpagedevice"
+*PageRegion Tabloid/Ledger (11x17): "<</PageSize[792 1224]/ImagingBBox null>>setpagedevice"
+*PageRegion Statement/Statement (5.5x8.5): "<</PageSize[396 612]/ImagingBBox null>>setpagedevice"
+*PageRegion FanFoldGermanLegal/13 inch Legal: "<</PageSize[612 936]/ImagingBBox null>>setpagedevice"
+*PageRegion Env10/Envelope #10: "<</PageSize[297 684]/ImagingBBox null>>setpagedevice"
+*PageRegion EnvDL/Envelope DL: "<</PageSize[311.81 623.62]/ImagingBBox null>>setpagedevice"
+*PageRegion EnvC5/Envelope C5: "<</PageSize[459.21 649.13]/ImagingBBox null>>setpagedevice"
+*PageRegion EnvMonarch/Envelope Monarch: "<</PageSize[278.93 540]/ImagingBBox null>>setpagedevice"
+*PageRegion Postcard/Post Card (100x148): "<</PageSize[283.46 419.53]/ImagingBBox null>>setpagedevice"
+*PageRegion 8.5x8.5/8.5 inch Square: "<</PageSize[612 612]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageRegion
+
+*DefaultImageableArea: A4
+*ImageableArea A4/A4: "11.88 11.88 583.40 830.01"
+*ImageableArea A5/A5: "11.88 11.88 407.65 583.40"
+*ImageableArea A3/A3: "11.88 11.88 830.01 1178.67"
+*ImageableArea B4/B4 (JIS): "11.88 11.88 716.62 1019.93"
+*ImageableArea B5/B5 (JIS): "11.88 11.88 504.03 716.62"
+*ImageableArea Letter/US Letter: "11.88 11.88 600.12 780.12"
+*ImageableArea Legal/US Legal: "11.88 11.88 600.12 996.12"
+*ImageableArea Tabloid/Ledger (11x17): "11.88 11.88 780.12 1212.12"
+*ImageableArea Statement/Statement (5.5x8.5): "11.88 11.88 384.12 600.12"
+*ImageableArea FanFoldGermanLegal/13 inch Legal: "11.88 11.88 600.12 924.12"
+*ImageableArea Env10/Envelope #10: "11.88 11.88 285.12 672.12"
+*ImageableArea EnvDL/Envelope DL: "11.88 11.88 299.93 611.74"
+*ImageableArea EnvC5/Envelope C5: "11.88 11.88 447.33 637.25"
+*ImageableArea EnvMonarch/Envelope Monarch: "11.88 11.88 267.05 528.12"
+*ImageableArea Postcard/Post Card (100x148): "11.88 11.88 271.58 407.65"
+*ImageableArea 8.5x8.5/8.5 inch Square: "11.88 11.88 600.12 600.12"
+*DefaultPaperDimension: A4
+*PaperDimension A4/A4: "595.28 841.89"
+*PaperDimension A5/A5: "419.53 595.28"
+*PaperDimension A3/A3: "841.89 1190.55"
+*PaperDimension B4/B4 (JIS): "728.50 1031.81"
+*PaperDimension B5/B5 (JIS): "515.91 728.50"
+*PaperDimension Letter/US Letter: "612 792"
+*PaperDimension Legal/US Legal: "612 1008"
+*PaperDimension Tabloid/Ledger (11x17): "792 1224"
+*PaperDimension Statement/Statement (5.5x8.5): "396 612"
+*PaperDimension FanFoldGermanLegal/13 inch Legal: "612 936"
+*PaperDimension Env10/Envelope #10: "297 684"
+*PaperDimension EnvDL/Envelope DL: "311.81 623.62"
+*PaperDimension EnvC5/Envelope C5: "459.21 649.13"
+*PaperDimension EnvMonarch/Envelope Monarch: "278.93 540"
+*PaperDimension Postcard/Post Card (100x148): "283.46 419.53"
+*PaperDimension 8.5x8.5/8.5 inch Square: "612 612"
+
+*OpenUI *Resolution/Output Resolution: PickOne
+*OrderDependency: 20 AnySetup *Resolution
+*DefaultResolution: 600dpi
+*Resolution 600dpi/600 x 600 dpi: "<</HWResolution[600 600]>>setpagedevice"
+*CloseUI: *Resolution
+
+*OpenUI *InputSlot/Media Source: PickOne
+*OrderDependency: 25 AnySetup *InputSlot
+*DefaultInputSlot: Auto
+*InputSlot Auto/Auto Select: ""
+*InputSlot Tray1/Tray 1: ""
+*InputSlot Tray2/Tray 2: ""
+*InputSlot Bypass/Bypass Tray: ""
+*CloseUI: *InputSlot
+
+*OpenUI *MediaType/Media Type: PickOne
+*OrderDependency: 26 AnySetup *MediaType
+*DefaultMediaType: Plain
+*MediaType Plain/Plain: ""
+*MediaType Thin/Thin: ""
+*MediaType Thick/Thick: ""
+*MediaType Envelope/Envelope: ""
+*MediaType Transparency/Transparency: ""
+*MediaType Recycle/Recycle: ""
+*CloseUI: *MediaType
+
+*OpenUI *TonerSave/Toner Save: Boolean
+*OrderDependency: 35 AnySetup *TonerSave
+*DefaultTonerSave: False
+*TonerSave False/Off: ""
+*TonerSave True/On: ""
+*CloseUI: *TonerSave
+
+*OpenUI *Smoothing/Smoothing: Boolean
+*OrderDependency: 36 AnySetup *Smoothing
+*DefaultSmoothing: False
+*Smoothing False/Off: ""
+*Smoothing True/On: ""
+*CloseUI: *Smoothing
+
+*DefaultFont: Courier
+*Font Courier: Standard "(001.004)" Standard ROM
+*Font Courier-Bold: Standard "(001.004)" Standard ROM
+*Font Courier-Oblique: Standard "(001.004)" Standard ROM
+*Font Courier-BoldOblique: Standard "(001.004)" Standard ROM
+*Font Helvetica: Standard "(001.006)" Standard ROM
+*Font Helvetica-Bold: Standard "(001.006)" Standard ROM
+*Font Helvetica-Oblique: Standard "(001.006)" Standard ROM
+*Font Helvetica-BoldOblique: Standard "(001.006)" Standard ROM
+*Font Times-Roman: Standard "(001.007)" Standard ROM
+*Font Times-Bold: Standard "(001.007)" Standard ROM
+*Font Times-Italic: Standard "(001.007)" Standard ROM
+*Font Times-BoldItalic: Standard "(001.007)" Standard ROM
+*Font Symbol: Special "(001.007)" Special ROM
+*Font ZapfDingbats: Special "(001.004)" Special ROM
+
+*% End of eSTUDIO2823AM.ppd

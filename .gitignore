@@ -1,0 +1,11 @@
+.DS_Store
+
+# 逆向用的 Windows 驱动原件（152MB，不入库）
+/Windows 11/
+/未命名文件夹/
+
+# 构建产物
+/rastertoestudio
+/tools/prncheck
+/tools/mkraster
+/app/build/

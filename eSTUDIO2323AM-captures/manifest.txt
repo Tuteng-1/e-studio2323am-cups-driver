@@ -1,0 +1,32 @@
+﻿# eSTUDIO2823AM capture manifest
+# generated: 2026-10-29 14:33:24
+# host: capture-host  os: Microsoft Windows NT 6.2.9200.0
+# driver: TOSHIBA e-STUDIO2823AMSeries GDI  processor: eSSh6PPR  port(Local): C:\eSTUDIO-capture\_raw.prn
+# capture queue: eSTUDIO-CAPTURE (isolated, never reaches the physical device)
+#
+# id | file | bytes | paper | dpi | duplex | copies | bin | scale | pages | time | desc
+01 | 01_blank_a4_600.prn | 709 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:26 | 全白 A4 纵向 600x600 单面 1份
+02 | 02_solid_a4_600.prn | 729 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:28 | 全黑 A4 纵向 600x600 单面 1份
+03 | 03_dot_a4_600.prn | 716 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:31 | 左上角 1x1 黑点 A4 600
+04 | 04_hline_y0_a4_600.prn | 722 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:33 | 1px 水平黑线 y=0 全宽
+05 | 05_vline_x0_a4_600.prn | 721 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:35 | 1px 垂直黑线 x=0 全高
+06 | 06_checker8_a4_600.prn | 3719 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:38 | 1px 棋盘格 A4 600
+07 | 07_text_a4_600.prn | 2185 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:40 | 中英混排文字页 宋体/Arial
+08 | 08_gray16_a4_600.prn | 905149 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:45 | 16 级灰阶渐变条
+09 | 09_gray50_a4_600.prn | 175970 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:49 | 50% 灰整页
+10 | 10_color_a4_600.prn | 584448 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:53 | RGB/CMY 色块（单色机看转换）
+11 | 11_dotline_a4_600.prn | 728 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:55 | 点+100px 横线 600x600
+12 | 12_dotline_a4_300.prn | 730 | A4 210x297 | 300 | default | 1 | default | 100 | 1 | 14:35:26 | 点+100px 横线 300x300 (驱动只提供 300/600)
+14 | 14_dotline_a4_portrait.prn | 728 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:33:59 | A4 纵向 基线复核
+15 | 15_dotline_a4_landscape.prn | 727 | A4 210x297 | 600 | default | 1 | default | 100 | 1 | 14:34:02 | A4 横向
+16 | 16_dotline_letter_portrait.prn | 726 | Letter 215.9x279.4 | 600 | default | 1 | default | 100 | 1 | 14:34:04 | Letter 纵向
+17 | 17_dotline_a3_portrait.prn | 774 | A3 297x420 | 600 | default | 1 | default | 100 | 1 | 14:34:07 | A3 纵向
+18 | 18_dotline_a5_portrait.prn | 695 | A5 148x210 | 600 | default | 1 | default | 100 | 1 | 14:34:09 | A5 纵向
+19 | 19_dotline_custom100x150.prn | 675 | Custom100x150 100x150 | 600 | default | 1 | default | 100 | 1 | 14:34:11 | 自定义 100x150mm
+20 | 20_duplex_2p.prn | 1181 | A4 210x297 | 600 | dup-long | 1 | default | 100 | 2 | 14:35:29 | 双面长边 2 页
+21 | 21_simplex_2p.prn | 1181 | A4 210x297 | 600 | simplex | 1 | default | 100 | 2 | 14:34:16 | 单面 2 页
+22 | 22_copies3.prn | 2090 | A4 210x297 | 600 | default | 3 | default | 100 | 1 | 14:34:18 | 份数=3
+23 | 23_bin1.prn | 729 | A4 210x297 | 600 | default | 1 | 260 | 100 | 1 | 14:34:20 | 纸盒 1 (bin 260)
+24 | 24_bin2.prn | 729 | A4 210x297 | 600 | default | 1 | 257 | 100 | 1 | 14:34:22 | 纸盒 2 (bin 257)
+25 | 25_bypass.prn | 734 | A4 210x297 | 600 | default | 1 | 258 | 100 | 1 | 14:34:24 | 手送/旁路托盘 (bin 258)
+28 | 28_scale50.prn | 728 | A4 210x297 | 600 | default | 1 | default | 50 | 1 | 14:35:31 | 缩放 50%
