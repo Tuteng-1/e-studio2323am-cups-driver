@@ -103,6 +103,10 @@ test-replay: $(FILTER) $(PRNCHECK)
 test-appctl:
 	./tools/checkappctl.sh ./scripts/estudioctl.sh
 
+# 打包图形界面「eSTUDIO 打印机管理.app」
+app: $(FILTER)
+	sh scripts/build-app.sh
+
 # 真实链路自测：PDF -> cgpdftoraster -> filter
 test-pdf: $(FILTER) $(PRNCHECK)
 	rm -rf $(TESTDIR) && mkdir -p $(TESTDIR)
