@@ -33,19 +33,47 @@ EOF
     chmod +x "$BIN/$1"
 }
 
-for c in lpadmin lp lpstat launchctl chown chmod; do make_stub "$c"; done
+for c in lp launchctl chown chmod; do make_stub "$c"; done
 
-# id -u 必须返回 0，让 need_root 通过
+# lpadmin 桩：除记录参数外，可选地记录“驱动 PPD 当时是否还在”（用于验证删除顺序）
+cat > "$BIN/lpadmin" <<'EOF'
+#!/bin/bash
+{
+  printf '%s' lpadmin
+  printf ' %s' "$@"
+  printf '\n'
+  for a in "$@"; do printf '%s\n' "$a"; done
+  if [ -n "${ESTUDIO_ORDER_FILE:-}" ]; then
+    if [ -f "$ESTUDIO_ORDER_FILE" ]; then
+      printf 'order: driver-present\n'
+    else
+      printf 'order: driver-gone\n'
+    fi
+  fi
+} >> "$ESTUDIO_LOG"
+[ "${ESTUDIO_LPADMIN_FAIL:-0}" = 1 ] && exit 1
+exit 0
+EOF
+chmod +x "$BIN/lpadmin"
+
+# id -u 默认返回 0；ESTUDIO_FAKE_UID 可模拟非 root
 cat > "$BIN/id" <<'EOF'
 #!/bin/bash
-if [ "${1:-}" = "-u" ]; then echo 0; exit 0; fi
+if [ "${1:-}" = "-u" ]; then echo "${ESTUDIO_FAKE_UID:-0}"; exit 0; fi
 /usr/bin/id "$@"
 EOF
 chmod +x "$BIN/id"
 
 # lpstat 桩：输出一个本驱动队列和一个无关队列
+#   ESTUDIO_LPSTAT_EMPTY=1 → 无任何队列（-v 返回 1，-r 正常）
+#   ESTUDIO_LPSTAT_FAIL=1  → CUPS 服务不可用（-v 与 -r 都失败）
 cat > "$BIN/lpstat" <<'EOF'
 #!/bin/bash
+[ "${ESTUDIO_LPSTAT_FAIL:-0}" = 1 ] && { echo "lpstat: error" >&2; exit 1; }
+case "${1:-}" in
+    -r) echo "scheduler is running"; exit 0 ;;
+esac
+[ "${ESTUDIO_LPSTAT_EMPTY:-0}" = 1 ] && exit 1
 printf 'device for eSTUDIO2823AM: socket://10.0.0.5:9100\n'
 printf 'device for OtherPrinter: ipp://x/y\n'
 EOF
@@ -145,15 +173,45 @@ ok "to_uri 边界"
 
 # --- list：只列 PPD 指向本驱动 filter 的队列 ---
 clear_log
-printf 'something rastertoestudio something\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
+printf '*cupsFilter: "application/vnd.cups-raster 0 rastertoestudio"\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
 out=$(ctl list)
 [ "$out" = "$(printf 'eSTUDIO2823AM\tsocket://10.0.0.5:9100')" ] \
     || { echo "FAIL: list 输出不符：'$out'"; fail=1; }
 case "$out" in *OtherPrinter*) echo "FAIL: list 混入了无关队列"; fail=1 ;; esac
 ok "list 只列本驱动队列"
 
+# PPD 存在但不含 filter，或只是相似名字，都不应列出
+clear_log
+printf '*cupsFilter: "application/vnd.cups-raster 0 notrastertoestudio"\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
+out=$(ctl list)
+[ -z "$out" ] || { echo "FAIL: PPD 不含本驱动 filter 时不应列出：'$out'"; fail=1; }
+ok "list 忽略不含本驱动 filter 的 PPD"
+
+# 一台打印机都没有时：list 必须成功且输出为空（CUPS 的 lpstat -v 此时返回 1）
+clear_log
+out=$(ESTUDIO_LPSTAT_EMPTY=1 "$CTL" list); rc=$?
+[ "$rc" = 0 ] || { echo "FAIL: 无队列时 list 应成功，得到 rc=$rc"; fail=1; }
+[ -z "$out" ] || { echo "FAIL: 无队列时 list 应输出空，得到 '$out'"; fail=1; }
+ok "list 无队列时返回空"
+
+# CUPS 服务不可用时必须报错，且 uninstall 不得删除任何东西
+clear_log
+printf 'x rastertoestudio\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
+"$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+if ESTUDIO_LPSTAT_FAIL=1 "$CTL" list >/dev/null 2>&1; then
+    echo "FAIL: CUPS 不可用时 list 应返回非 0"; fail=1
+fi
+clear_log
+if ESTUDIO_LPSTAT_FAIL=1 "$CTL" uninstall-driver --remove-queues >/dev/null 2>&1; then
+    echo "FAIL: CUPS 不可用时 uninstall-driver --remove-queues 应中止"; fail=1
+fi
+[ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] || { echo "FAIL: 中止时不应删除驱动 PPD"; fail=1; }
+grep -qF "lpadmin -x" "$LOG" 2>/dev/null && { echo "FAIL: 中止时不应调用 lpadmin -x"; fail=1; }
+ok "list 报告 CUPS 不可用，uninstall 不误删"
+
 # --- install-driver：真实复制到临时目录 ---
 clear_log
+rm -f "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
 "$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
 [ -f "$FILTER_DIR/rastertoestudio" ] || { echo "FAIL: filter 未安装"; fail=1; }
 [ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] || { echo "FAIL: PPD 未安装"; fail=1; }
@@ -161,24 +219,60 @@ has "chown root:wheel"
 [ "$(ctl status)" = "installed" ] || { echo "FAIL: status 应为 installed"; fail=1; }
 ok "install-driver 安装 filter+PPD，status=installed"
 
-# --- uninstall-driver --remove-queues：删文件并删除本驱动队列 ---
+# 非 root 且非 dry-run 必须拒绝
 clear_log
-printf 'something rastertoestudio something\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
-"$CTL" uninstall-driver --remove-queues >/dev/null || { echo "FAIL: uninstall-driver 失败"; fail=1; }
-[ -f "$FILTER_DIR/rastertoestudio" ] && { echo "FAIL: filter 未删除"; fail=1; }
-has "lpadmin -x eSTUDIO2823AM"
-[ "$(ctl status)" = "not-installed" ] || { echo "FAIL: status 应为 not-installed"; fail=1; }
-ok "uninstall-driver 删除驱动与队列"
+if ESTUDIO_FAKE_UID=1000 "$CTL" install-driver >/dev/null 2>&1; then
+    echo "FAIL: 非 root 执行 install-driver 应失败"; fail=1
+fi
+ok "install-driver 拒绝非 root"
 
-# --- dry-run：只打印，不落地 ---
+# --- dry-run：位置无关、免 root、只打印不落地 ---
 clear_log
-out=$("$CTL" --dry-run install-driver)
-case "$out" in
-    *"DRY:"*"install -m 755"*) ;;
-    *) echo "FAIL: dry-run 未打印 install 命令"; fail=1 ;;
-esac
-[ -f "$FILTER_DIR/rastertoestudio" ] && { echo "FAIL: dry-run 不应落地文件"; fail=1; }
-ok "dry-run 只打印不执行"
+rm -f "$FILTER_DIR/rastertoestudio" "$PPD_DIR/eSTUDIO2823AM.ppd"
+ESTUDIO_FAKE_UID=1000 "$CTL" install-driver --dry-run >"$TMP/dry" 2>&1 \
+    || { echo "FAIL: install-driver --dry-run（非 root）应成功"; fail=1; }
+grep -q "DRY:.*install -m 755" "$TMP/dry" || { echo "FAIL: dry-run 未打印 install 命令"; fail=1; }
+[ -f "$FILTER_DIR/rastertoestudio" ] && { echo "FAIL: dry-run 不应安装 filter"; fail=1; }
+[ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] && { echo "FAIL: dry-run 不应安装 PPD"; fail=1; }
+[ -s "$LOG" ] && { echo "FAIL: dry-run 不应执行任何外部命令"; fail=1; }
+ok "dry-run 位置无关、免 root、不落地"
+
+# --- uninstall-driver（不带 --remove-queues）：删驱动文件，不动队列 ---
+clear_log
+"$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+printf 'x rastertoestudio\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
+clear_log
+"$CTL" uninstall-driver >/dev/null || { echo "FAIL: uninstall-driver 失败"; fail=1; }
+[ -f "$FILTER_DIR/rastertoestudio" ] && { echo "FAIL: filter 未删除"; fail=1; }
+[ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] && { echo "FAIL: 驱动目录 PPD 未删除"; fail=1; }
+hasnt "lpadmin -x"
+[ "$(ctl status)" = "not-installed" ] || { echo "FAIL: status 应为 not-installed"; fail=1; }
+ok "uninstall-driver 删驱动文件、保留队列"
+
+# --- uninstall-driver --remove-queues：先删队列，再删驱动文件 ---
+clear_log
+"$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+printf 'x rastertoestudio\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
+ESTUDIO_ORDER_FILE="$PPD_DIR/eSTUDIO2823AM.ppd" \
+    "$CTL" uninstall-driver --remove-queues >/dev/null \
+    || { echo "FAIL: uninstall-driver --remove-queues 失败"; fail=1; }
+has "lpadmin -x eSTUDIO2823AM"
+has "order: driver-present"
+hasnt "order: driver-gone"
+hasnt "lpadmin -x OtherPrinter"
+[ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] && { echo "FAIL: 驱动 PPD 未删除"; fail=1; }
+ok "uninstall-driver --remove-queues 先删队列再删驱动"
+
+# 删队列失败：告警 + 汇总 + 仍删驱动文件，但整体返回非 0
+clear_log
+"$CTL" install-driver >/dev/null || { echo "FAIL: install-driver 失败"; fail=1; }
+printf 'x rastertoestudio\n' > "$CUPS_PPD_DIR/eSTUDIO2823AM.ppd"
+if ESTUDIO_LPADMIN_FAIL=1 "$CTL" uninstall-driver --remove-queues >"$TMP/out" 2>"$TMP/err"; then
+    echo "FAIL: 删队列失败时 uninstall-driver 应返回非 0"; fail=1
+fi
+grep -q "警告" "$TMP/err" || { echo "FAIL: 删队列失败时应输出警告"; fail=1; }
+[ -f "$PPD_DIR/eSTUDIO2823AM.ppd" ] && { echo "FAIL: 删队列失败时仍应删除驱动 PPD"; fail=1; }
+ok "uninstall-driver 逐队列软失败并汇总"
 
 echo "ctl 基础检查：$([ "$fail" = 0 ] && echo 全部通过 || echo 有失败)"
 exit "$fail"
