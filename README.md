@@ -1,5 +1,7 @@
 # e-STUDIO2323AM / 2823AM — macOS 原生驱动
 
+[![CI](https://github.com/Tuteng-1/e-studio2323am-cups-driver/actions/workflows/ci.yml/badge.svg)](https://github.com/Tuteng-1/e-studio2323am-cups-driver/actions/workflows/ci.yml)
+
 TOSHIBA e-STUDIO2323AM（同系列 2823AM）只有 Windows GDI 驱动。这个项目把它的
 真实线缆协议逆向出来，做成 **原生 CUPS 驱动**：一个 filter + 一个 PPD，
 直接用系统自带的 `socket` backend，不依赖 Windows、不需要共享打印、不需要桥接。
@@ -27,6 +29,9 @@ PDF/图片 → cupsfilter → CUPS raster → rastertoestudio → PJL + JBIG →
 ## 构建与自测
 
 ```sh
+git clone https://github.com/Tuteng-1/e-studio2323am-cups-driver.git
+cd e-studio2323am-cups-driver
+
 make                 # 编译 filter（含 vendored jbigkit）
 make test            # 合成 raster → filter → 解码/DOTCOUNT/重编码校验
 make test-pdf        # 真实链路：PDF → cgpdftoraster → filter（两页 A4 600dpi）
