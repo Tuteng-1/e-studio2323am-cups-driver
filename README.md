@@ -52,7 +52,7 @@ make app             # 打包「eSTUDIO 打印机管理.app」
 ## 安装
 
 ```sh
-sudo ./scripts/install.sh --queue 192.0.2.10    # 装驱动 + 建 socket:// 队列
+sudo ./scripts/install.sh --queue 192.0.2.10     # 装驱动 + 建 socket:// 队列
 sudo ./scripts/install.sh                        # 只装驱动
 ```
 
@@ -95,7 +95,7 @@ sudo ./scripts/estudioctl.sh remove eSTUDIO2823AM
 sudo ./scripts/estudioctl.sh list
 sudo ./scripts/estudioctl.sh uninstall-driver [--remove-queues]
 ./scripts/estudioctl.sh --dry-run install-driver                  # 只打印将执行的命令
-sudo ./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10   # 需已安装驱动
+sudo ./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10    # 需已安装驱动
 ```
 
 ### 人工测试清单
@@ -110,7 +110,7 @@ sudo ./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10   # 需已�
 7. ⬜ 卸载驱动 → `/usr/libexec/cups/filter/rastertoestudio` 与
    `/Library/Printers/PPDs/Contents/Resources/eSTUDIO2823AM.ppd` 都消失。
 
-> 第 1–4 步已在 macOS + e-STUDIO2323AM（`192.0.2.10`，序列号 CPGM00000）上实测通过；
+> 第 1–4 步已在 macOS + e-STUDIO2323AM（内网地址与序列号已隐去）上实测通过；
 > 第 5–7 步的等价逻辑由 `make test-appctl` / `make test-appui` 覆盖（PATH 桩，验证命令
 > 构造与副作用），但还没有在真机上走一遍。
 
@@ -219,5 +219,27 @@ eSTUDIO2323AM-captures/   抓包样本与实测报告
 
 ## 许可
 
-filter、PPD、工具为本项目代码；`third_party/jbigkit/` 为 GPL-2+，
-分发时请一并保留 `COPYING`。
+本项目整体采用 **GNU General Public License v2.0 或更新版本**
+（SPDX：`GPL-2.0-or-later`），全文见 [`LICENSE`](LICENSE)。
+
+之所以不是 MIT：filter 静态链接了 `third_party/jbigkit/`（Markus Kuhn 的
+jbigkit 2.1，GPL-2+），编译出的 `rastertoestudio` 属于 GPL 派生作品，
+整个项目跟随同一许可最省事、也最不容易被误用。
+
+| 部分 | 许可 |
+|---|---|
+| `src/`、`ppd/`、`tools/`、`scripts/`、`app/` | GPL-2.0-or-later |
+| `third_party/jbigkit/` | GPL-2.0-or-later（原作者许可，随附 `COPYING`） |
+
+第三方组件的来源与本地改动见 [`third_party/jbigkit/README.md`](third_party/jbigkit/README.md)。
+
+## 关于本项目的法律边界
+
+- 仓库内**不含任何 TOSHIBA 的二进制、源代码或文档**。所有协议细节来自对
+  本机打印队列的**网络/端口抓包**（PJL 文本信封 + 设备实际接收的页面数据），
+  属于为互操作而进行的观察，不涉及分发厂商代码。
+- 未包含或内置任何厂商驱动文件；使用本项目不需要安装 Windows 驱动。
+- `TOSHIBA`、`e-STUDIO` 是其各自权利人的商标，本项目与 TOSHIBA TEC
+  无任何隶属或背书关系，名称仅用于说明兼容的设备型号。
+- 软件按 GPL-2.0 的免责条款提供，**不提供任何担保**；打印前请自行确认
+  纸张、纸盒等设置，避免浪费耗材。

@@ -1,10 +1,10 @@
 # e-STUDIO2323AM / 2823AM GDI 打印流：实测结论
 
-抓包机器：capture-host（x64 Win11 22000）
+抓包机器：一台 x64 Win11 22000 机器（主机名已隐去）
 驱动：`TOSHIBA e-STUDIO2823AMSeries GDI`（`essh6.inf_amd64_d7e5f2af3ec4e476`）
-打印处理器：`eSSh6PPR`　实体机：`TOSHIBA e-STUDIO2323AM`，序列号 CPGM00000，192.0.2.10
+打印处理器：`eSSh6PPR`　实体机：`TOSHIBA e-STUDIO2323AM`（序列号与内网地址已隐去）
 抓包方式：独立队列 `eSTUDIO-CAPTURE` → Local Port → 落盘（全程未触达实体机）
-验证方式：TopAccess 页计数器（`http://192.0.2.10/H10_Counter.htm`）
+验证方式：TopAccess 页计数器（`http://<打印机IP>/H10_Counter.htm`）
 
 ---
 
@@ -160,7 +160,27 @@ ESC%-12345X\r\n
 
 ---
 
-## 5. 文件清单
+## 5. 抓包矩阵与文件清单
+
+### 矩阵完成情况
+
+| 编号 | 状态 | 说明 |
+|---|---|---|
+| 01–10 内容矩阵 | ✅ 已完成 | 全白/全黑/单点/横线/竖线/棋盘格/文字/16级灰阶/50%灰/色块 |
+| 11 600dpi | ✅ | 基线 |
+| 12 300dpi | ✅ | 驱动确实有 300 档，但输出仍标记 600（位图被放大） |
+| 13 2400dpi | ⛔ 跳过 | 驱动只提供 300/600，无 2400 |
+| 14–19 纸张/方向 | ✅ 已完成 | A4纵/A4横/Letter/A3/A5/自定义100×150（被映射成 `JPOST`） |
+| 20 双面 | ⛔ 不适用 | 本机无自动双面单元；PJL 取值已从驱动提取，本项目固定发 `DUPLEX=OFF` |
+| 21 单面 2 页 | ✅ | 页边界的对照样本 |
+| 22 份数 3 | ✅ | 驱动把整页数据重复发 3 次，PJL 里 `COPIES=1` |
+| 23–25 纸盒 | ✅ | `MEDIASOURCE=TRAY1/TRAY2/MANUALFEED` |
+| 26 省墨 / 27 质量 | ❌ 不需要 | 只影响驱动端位图生成，filter 自己决定 |
+| 28 缩放 50% | ⚠️ 未生效 | 驱动私有区控制；缩放由 filter 在光栅化阶段完成 |
+| 29 N-up / 30 水印 | ❌ 不需要 | 驱动端图像合成，不涉及设备协议 |
+| 31 状态通道 | ❌ 不需要 | 状态走 TopAccess(HTTP)/SNMP，与打印数据无关 |
+
+### 文件清单
 
 | 文件 | 内容 |
 |---|---|
@@ -170,6 +190,6 @@ ESC%-12345X\r\n
 | `structure.txt` | 每个文件的块结构、20 字节头字段、分带标记统计 |
 | `caps.txt` | 驱动的 DeviceCapabilities：纸张表、纸盒表、分辨率表 |
 | `FINDINGS.md` | 本文 |
-| `CaptureTool.exe` + `.cs` | 抓包工具源码（`caps` / `list` / `run` / `dump` / `send` / `rawtest`） |
+| `CaptureTool.exe` + `.cs` | 抓包工具（`caps` / `list` / `run` / `dump` / `send` / `rawtest`）；Windows 专用，**未随仓库发布** |
 
 > `C:\prn\` 是 Windows 保留设备名（PRN），清单里的这个路径不可用，已改成 `C:\eSTUDIO-capture\`。

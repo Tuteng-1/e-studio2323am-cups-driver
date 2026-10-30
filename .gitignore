@@ -9,3 +9,7 @@
 /tools/prncheck
 /tools/mkraster
 /app/build/
+
+# Python 缓存
+__pycache__/
+*.pyc

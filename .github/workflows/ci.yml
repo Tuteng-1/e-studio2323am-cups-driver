@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    name: macOS（构建 + 全量回归）
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 工具链自检
+        run: |
+          cc --version | head -1
+          cups-config --version
+          sw_vers
+
+      - name: 构建
+        run: make
+
+      - name: PPD 与选项自测
+        run: |
+          make check
+          make test-options
+
+      - name: filter 自测（合成 raster + 真实 PDF）
+        run: |
+          make test
+          make test-pdf
+
+      - name: 抓包逐字节回归（25 个厂商样本）
+        run: make test-capture
+
+      - name: 整链路重放
+        run: make test-replay
+
+      - name: CLI 与界面自测
+        run: |
+          make test-appctl
+          make test-appui
+
+      - name: 打包 app
+        run: make app
+
+  privacy:
+    name: 隐私检查（不得含真实设备信息）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 扫描工作区
+        run: |
+          # 抓包已做过等长脱敏，这里防止以后又被加回来
+          if grep -rInE 'CPGM[0-9]{5}|DESKTOP-[A-Z0-9]{7}' \
+               --exclude-dir=.git . ; then
+            echo "::error::发现疑似真实序列号或主机名"
+            exit 1
+          fi
+          echo "OK：未发现真实设备标识"
