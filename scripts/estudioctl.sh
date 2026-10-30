@@ -17,10 +17,19 @@
 #
 set -u
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# 用 BASH_SOURCE 而不是 $0：这样被 source（lib 模式）时也能定位到自身
+SELF_PATH="${BASH_SOURCE[0]:-$0}"
+HERE="$(cd "$(dirname "$SELF_PATH")" && pwd)"
+ROOT="$(cd "$HERE/.." && pwd)"
+FILTER_REL=rastertoestudio
+PPD_REL=ppd/eSTUDIO2823AM.ppd
+# app 包内布局：ctl 在 Contents/Resources，filter 与 PPD 就放在同一目录
+case "$HERE" in
+    */Contents/Resources) ROOT="$HERE"; PPD_REL=eSTUDIO2823AM.ppd ;;
+esac
 
-FILTER_SRC="${ESTUDIO_FILTER_SRC:-$ROOT/rastertoestudio}"
-PPD_SRC="${ESTUDIO_PPD_SRC:-$ROOT/ppd/eSTUDIO2823AM.ppd}"
+FILTER_SRC="${ESTUDIO_FILTER_SRC:-$ROOT/$FILTER_REL}"
+PPD_SRC="${ESTUDIO_PPD_SRC:-$ROOT/$PPD_REL}"
 
 FILTER_DIR="${ESTUDIO_FILTER_DIR:-/usr/libexec/cups/filter}"
 PPD_DIR="${ESTUDIO_PPD_DIR:-/Library/Printers/PPDs/Contents/Resources}"

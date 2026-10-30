@@ -10,6 +10,7 @@ ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 CTL=${1:-$ROOT_DIR/scripts/estudioctl.sh}
 [ -x "$CTL" ] || { echo "FAIL: 找不到可执行的 ctl：$CTL"; exit 2; }
 TMP=$(mktemp -d "${TMPDIR:-/tmp}/estudio-ctl.XXXXXX") || exit 2
+TMP=$(cd "$TMP" && pwd)   # 归一化（TMPDIR 可能以 / 结尾，出现 // 会让路径字符串比较失效）
 trap 'rm -rf "$TMP"' EXIT
 
 BIN="$TMP/bin"
@@ -389,6 +390,23 @@ ESTUDIO_FAKE_UID=1000 "$CTL" --dry-run remove MyPrn >/dev/null 2>&1 \
     || { echo "FAIL: remove --dry-run（非 root）应成功"; fail=1; }
 [ -s "$LOG" ] && { echo "FAIL: dry-run 不应执行外部命令"; fail=1; }
 ok "set-port/remove --dry-run 免 root"
+
+# --- app 包内布局：ctl 在 Contents/Resources，filter/PPD 与它同目录 ---
+BUNDLE="$TMP/Bundle.app/Contents/Resources"
+mkdir -p "$BUNDLE"
+cp "$CTL" "$BUNDLE/estudioctl.sh"; chmod +x "$BUNDLE/estudioctl.sh"
+: > "$BUNDLE/rastertoestudio"
+: > "$BUNDLE/eSTUDIO2823AM.ppd"
+out=$(env -u ESTUDIO_FILTER_SRC -u ESTUDIO_PPD_SRC \
+      ESTUDIO_FILTER_DIR="$TMP/b/filter" ESTUDIO_PPD_DIR="$TMP/b/ppd" \
+      ESTUDIO_CUPS_PPD_DIR="$CUPS_PPD_DIR" \
+      "$BUNDLE/estudioctl.sh" --dry-run install-driver) \
+    || { echo "FAIL: app 包内布局 install-driver --dry-run 失败"; fail=1; }
+case "$out" in
+    *"$BUNDLE/rastertoestudio"*"$BUNDLE/eSTUDIO2823AM.ppd"*) ;;
+    *) echo "FAIL: app 包内布局未找到 filter/PPD：$out"; fail=1 ;;
+esac
+ok "app 包内布局能找到 filter/PPD"
 
 # 删队列失败：告警 + 汇总 + 仍删驱动文件，但整体返回非 0
 clear_log
