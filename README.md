@@ -20,7 +20,7 @@ PDF/图片 → cupsfilter → CUPS raster → rastertoestudio → PJL + JBIG →
 | 页尺寸 / 物理原点 | ✅ 可打印区居中贴回整页，位置与 Windows 驱动一致 |
 | 纸张 / 纸盒 / 省墨 / 平滑 | ✅ 映射为 PJL 行 |
 | 多页 / 多份 | ✅ 与驱动相同的 `COPYEND` 作业重复方式，`make test-replay` 逐字节通过 |
-| 横向 | ⚠️ 已实现旋转 + `ORIENTATION=LANDSCAPE`，方向待上机确认 |
+| 横向 | ✅ 旋转 + `ORIENTATION=LANDSCAPE`；2026-10-30 实机确认方向正确 |
 | 双面 | ➖ 机器本身没有自动双面单元；始终单面（`DUPLEX=OFF`），PPD 不再提供该选项 |
 | 实机打印 | ✅ 2026-10-29 把 filter 生成的一页 A4 直发 9100；2026-10-30 走完整链路（app 装驱动 → 建 `socket://192.0.2.10:9100` 队列 → 打印测试页）出纸正常，TopAccess 打印计数 45003 → 45009 |
 
@@ -142,12 +142,12 @@ ESTUDIO_DEBUG=1 ./rastertoestudio 1 user title 1 "PageSize=A4" page.raster > out
 `ESTUDIO_DEBUG=1` 会往 stderr 打印每页的 raster 尺寸、JBIG 字节数、黑点数；
 CUPS 把 filter 的 stderr 写进 `/var/log/cups/error_log`。
 
-## 已知不确定的地方
+## 已知的边界行为
 
-- **横向旋转方向**：抓包里 `ORIENTATION=LANDSCAPE` 时位图仍是纵向页框、内容被
-  逆时针旋转过（原始左上角落到纸面左下角）。正常 CUPS 队列里 pdftopdf 已按
+- **横向**：抓包里 `ORIENTATION=LANDSCAPE` 时位图仍是纵向页框、内容被逆时针
+  旋转过（原始左上角落到纸面左下角）。正常 CUPS 队列里 pdftopdf 已按
   `orientation-requested=4` 转好，filter 只置标志；若上游直接给横向 raster，
-  filter 自己旋转。方向若在实机上是反的，改 `rotate_mono()`。
+  filter 自己旋转。2026-10-30 实机确认方向正确。
 - **空白页会被跳过**：`DOTCOUNT=0` 的页设备不计数（Windows 驱动同样如此）。
   双面抓包 `20_duplex_2p` 里也始终是 `DUPLEX=OFF`，这台机器没有自动双面单元。
 - **多份打印**：Windows 驱动是整份作业重复 N 次、每次以 `@PJL COPYEND` 结束，

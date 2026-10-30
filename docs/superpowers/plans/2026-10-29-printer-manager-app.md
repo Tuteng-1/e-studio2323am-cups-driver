@@ -1148,7 +1148,9 @@ git commit -m "docs: app 使用说明；install.sh 改为 estudioctl 薄封装"
 2. **打印测试页错误地要求管理员权限**：`lp` 用普通用户即可，改为不要求 root
    （否则作业属于 root）。
 
+- ✅ 横向内容方向实机确认正确（`rotate_mono()` 无需改动），
+  `docs/protocol-notes.md` 的「尚未实测」表里最后一项已关闭。
+
 尚未验证：
 
 - 设置端口 / 删除打印机 / 卸载驱动 尚未在真机上走一遍（等价逻辑有 `make test-appctl` 覆盖）。
-- 横向方向目视确认（若反了改 `rotate_mono()`）。

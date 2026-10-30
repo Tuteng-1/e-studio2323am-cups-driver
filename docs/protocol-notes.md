@@ -105,12 +105,12 @@ pbmtojbg -q -o 3 -p 72 -s 128 -m 0 in.pbm out.jbg
   正常 CUPS 队列里 pdftopdf 会先按 `orientation-requested=4` 把内容转进纵向
   页框，此时 filter 只置 `ORIENTATION=LANDSCAPE`，不再二次旋转；
   如果上游直接给横向 raster（宽 > 纸宽），filter 自己旋转 90° 逆时针。
+  **2026-10-30 实机确认方向正确**，`rotate_mono()` 无需改动。
 
 ## 5. 尚未实测的部分
 
 | 项目 | 现状 |
 |---|---|
-| 横向排版方向 | 旋转方向按抓包内容位置推断；若实机打出来是倒的，改 `rotate_mono()` 的方向。 |
 | 空白页 | `DOTCOUNT=0` 的页被设备跳过（与 Windows 驱动行为一致）。 |
 | 双面 | 2323AM/2823AM 无自动双面单元：PPD 不提供 `Duplex`，filter 恒发 `DUPLEX=OFF`。 |
 | 300dpi | 设备只有 600dpi 引擎，选 300 时 Windows 驱动会 2× 放大后仍发 `RESOLUTION=600`。PPD 只提供 600。 |
