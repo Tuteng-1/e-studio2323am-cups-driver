@@ -32,10 +32,13 @@ on askText(prompt, def)
 	return text returned of r
 end askText
 
-on confirm(prompt, okLabel)
-	set r to display dialog prompt buttons {"取消", okLabel} default button okLabel with title "eSTUDIO 打印机管理"
-	return (button returned of r is okLabel)
-end confirm
+-- 二选一确认框。第一个按钮是回车默认选中的那个：
+-- 可选操作（打测试页）和破坏性操作（删除/卸载）都把「更安全」的选项放第一位。
+-- 返回用户实际点的按钮名。
+on choose(prompt, defaultLabel, otherLabel)
+	set r to display dialog prompt buttons {defaultLabel, otherLabel} default button defaultLabel with title "eSTUDIO 打印机管理"
+	return button returned of r
+end choose
 
 on say(msg)
 	display dialog msg buttons {"好"} default button "好" with title "eSTUDIO 打印机管理"
@@ -97,8 +100,9 @@ on addPrinter()
 	end if
 
 	set cmdStr to "add " & quoted form of qname & " " & quoted form of addr
-	if confirm("把 " & qname & " 设为默认打印机？", "设为默认") then set cmdStr to cmdStr & " --default"
-	if confirm("添加后立即打印测试页？", "打印测试页") then set cmdStr to cmdStr & " --test"
+	if choose("把 " & qname & " 设为默认打印机？", "设为默认", "不设为默认") is "设为默认" then set cmdStr to cmdStr & " --default"
+	-- 打印测试页是可选的，默认不打
+	if choose("添加后立即打印测试页？", "不打印", "打印测试页") is "打印测试页" then set cmdStr to cmdStr & " --test"
 
 	set r to ctl(cmdStr, true)
 	if r is not "" then say(r)
@@ -123,15 +127,15 @@ end testPage
 on removePrinter()
 	set qname to pickQueue("选择要删除的打印机：")
 	if qname is missing value then return
-	if not confirm("删除打印机「" & qname & "」？它的打印队列与配置文件都会一并删除。", "删除") then return
+	if choose("删除打印机「" & qname & "」？它的打印队列与配置文件都会一并删除。", "不删除", "删除") is not "删除" then return
 	set r to ctl("remove " & quoted form of qname, true)
 	if r is not "" then say(r)
 end removePrinter
 
 on uninstallDriver()
-	if not confirm("卸载驱动？这会从系统移除 filter 与 PPD，卸载后本驱动创建的打印机将无法打印。", "卸载驱动") then return
+	if choose("卸载驱动？这会从系统移除 filter 与 PPD，卸载后本驱动创建的打印机将无法打印。", "不卸载", "卸载驱动") is not "卸载驱动" then return
 	set cmdStr to "uninstall-driver"
-	if confirm("同时删除本驱动创建的所有打印机？", "一并删除") then set cmdStr to cmdStr & " --remove-queues"
+	if choose("同时删除本驱动创建的所有打印机？", "保留打印机", "一并删除") is "一并删除" then set cmdStr to cmdStr & " --remove-queues"
 	set r to ctl(cmdStr, true)
 	if r is not "" then say(r)
 end uninstallDriver
@@ -156,7 +160,7 @@ end showStatus
 
 on run
 	if ctl("status", false) is not "installed" then
-		if not confirm("驱动尚未安装。现在安装？需要管理员密码。", "安装驱动") then return
+		if choose("驱动尚未安装。现在安装？需要管理员密码。", "安装驱动", "退出") is not "安装驱动" then return
 		set r to ctl("install-driver", true)
 		if r is "" then return
 		say(r)

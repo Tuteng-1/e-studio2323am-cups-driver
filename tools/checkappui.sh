@@ -70,10 +70,23 @@ subs = [
      '''\tif prompt contains "NotUsed" then return missing value
 \tif prompt contains "队列名" then return "TestQ"
 \treturn "10.9.9.9"'''),
-    # confirm -> 一律确认
-    ('''\tset r to display dialog prompt buttons {"取消", okLabel} default button okLabel with title "eSTUDIO 打印机管理"
-\treturn (button returned of r is okLabel)''',
-     '''\treturn true'''),
+    # choose -> 模拟用户操作：值为「回车」时返回**默认按钮**（这样才能验证默认值本身），
+    # 否则返回指定的按钮名
+    ('''\tset r to display dialog prompt buttons {defaultLabel, otherLabel} default button defaultLabel with title "eSTUDIO 打印机管理"
+\treturn button returned of r''',
+     '''\tif prompt contains "设为默认打印机" then
+\t\tif pDefaultWants is "回车" then return defaultLabel
+\t\treturn pDefaultWants
+\tend if
+\tif prompt contains "测试页" then
+\t\tif pTestWants is "回车" then return defaultLabel
+\t\treturn pTestWants
+\tend if
+\tif prompt contains "删除打印机" then
+\t\tif pDeleteWants is "回车" then return defaultLabel
+\t\treturn pDeleteWants
+\tend if
+\treturn defaultLabel'''),
     # say -> 静默
     ('''\tdisplay dialog msg buttons {"好"} default button "好" with title "eSTUDIO 打印机管理"''',
      '''\treturn'''),
@@ -89,7 +102,21 @@ for old, new in subs:
         sys.exit("FAIL: 无法在 main.applescript 中定位待替换的 handler（界面代码改动后请同步更新本测试）")
     s = s.replace(old, new, 1)
 
-s += '''on run
+# 注意：AppleScript 的 property 必须在用到它的 handler **之前**声明
+prelude = '''property pDefaultWants : "回车"
+property pTestWants : "回车"
+property pDeleteWants : "回车"
+
+'''
+
+s = prelude + s + '''on run
+\t-- 第一次：全部直接回车（验证默认按钮：设为默认 + 不打印测试页）
+\taddPrinter()
+\tremovePrinter()   -- 也应默认「不删除」，即什么都不做
+\t-- 第二次：明确选「不设为默认」+「打印测试页」
+\tset pDefaultWants to "不设为默认"
+\tset pTestWants to "打印测试页"
+\tset pDeleteWants to "删除"
 \taddPrinter()
 \tsetPort()
 \ttestPage()
@@ -122,8 +149,12 @@ fi
 wait "$pid" || { echo "FAIL: 探针执行失败"; sed 's/^/  /' "$TMP/err"; exit 1; }
 grep -qx "done" "$TMP/out" || { echo "FAIL: 探针未正常结束：$(cat "$TMP/out")"; exit 1; }
 
-# [ADMIN] = 会弹管理员密码框。只有改系统配置的操作才需要，打印测试页不需要
-expected="add 'TestQ' '10.9.9.9' --default --test [ADMIN]
+# [ADMIN] = 会弹管理员密码框。只有改系统配置的操作才需要，打印测试页不需要。
+# 第 1 个 add 走默认按钮：设默认、**不打**测试页（测试页是可选的）。
+# remove 走默认按钮（不删除）时不产生任何命令。
+# 第 2 个 add 明确选了「不设为默认」+「打印测试页」。
+expected="add 'TestQ' '10.9.9.9' --default [ADMIN]
+add 'TestQ' '10.9.9.9' --test [ADMIN]
 set-port 'TestQ' '10.9.9.9' [ADMIN]
 testpage 'TestQ'
 remove 'TestQ' [ADMIN]

@@ -75,7 +75,8 @@ make app      # 产出 app/build/eSTUDIO 打印机管理.app
 双击打开即可：
 
 - 安装 / 卸载驱动（卸载时可选一并删除本驱动创建的打印机）；
-- 添加打印机：填队列名（默认 `eSTUDIO2823AM`）与 IP，可选设为默认、添加后立即打印测试页；
+- 添加打印机：填队列名（默认 `eSTUDIO2823AM`）与 IP；会问一次「设为默认打印机？」
+  和一次「添加后立即打印测试页？」——**打印测试页是可选的，默认不打**；
 - 设置端口：选中已有打印机，改成新的 IP（自动补 `socket://` 与 `:9100`）；
 - 打印测试页；
 - 删除打印机：连同该队列的配置文件一起清理；
@@ -110,8 +111,47 @@ sudo ./scripts/estudioctl.sh --dry-run add eSTUDIO2823AM 192.0.2.10   # 需已�
    `/Library/Printers/PPDs/Contents/Resources/eSTUDIO2823AM.ppd` 都消失。
 
 > 第 1–4 步已在 macOS + e-STUDIO2323AM（`192.0.2.10`，序列号 CPGM00000）上实测通过；
-> 第 5–7 步的等价逻辑由 `make test-appctl` 覆盖（PATH 桩，验证命令构造与副作用），
-> 但还没有在真机上走一遍。
+> 第 5–7 步的等价逻辑由 `make test-appctl` / `make test-appui` 覆盖（PATH 桩，验证命令
+> 构造与副作用），但还没有在真机上走一遍。
+
+### 真机收尾清单（还剩这三步）
+
+破坏性从小到大，建议按顺序做；前两步可反复，第三步会把环境清空。
+界面里的操作都要输一次管理员密码。
+
+**① 设置端口**（可逆，不打印）
+
+1. app →「设置端口」→ 选 `eSTUDIO2823AM` → 填一个**假的** IP，例如 `192.0.2.99`。
+2. `./scripts/estudioctl.sh list` → 应显示 `socket://192.0.2.99:9100`。
+3. 再「设置端口」填回 `192.0.2.10` → `list` 应显示 `socket://192.0.2.10:9100`。
+
+等价命令：
+
+```sh
+sudo ./scripts/estudioctl.sh set-port eSTUDIO2823AM 192.0.2.99
+./scripts/estudioctl.sh list
+sudo ./scripts/estudioctl.sh set-port eSTUDIO2823AM 192.0.2.10
+```
+
+**② 删除打印机**（可逆：删完再「添加打印机」就回来了）
+
+1. app →「删除打印机」→ 选 `eSTUDIO2823AM` → 确认框默认是「不删除」，要点「删除」。
+2. `./scripts/estudioctl.sh list` → 应为空；`ls /etc/cups/ppd/` 不应再有
+   `eSTUDIO2823AM.ppd`。
+3. 需要的话再用 app「添加打印机」加回来（IP `192.0.2.10`）。
+
+**③ 卸载驱动**（清空，最后做）
+
+1. app →「卸载驱动」→ 默认「不卸载」，要点「卸载驱动」；再问「同时删除所有打印机？」
+   时按需要选（默认「保留打印机」）。
+2. 检查两个系统目录里都不再有本驱动的文件：
+
+```sh
+ls /usr/libexec/cups/filter/rastertoestudio            # 应报 No such file
+ls /Library/Printers/PPDs/Contents/Resources/eSTUDIO2823AM.ppd   # 应报 No such file
+```
+
+3. 想继续用就再打开 app 装一次（或 `sudo ./scripts/install.sh --queue 192.0.2.10`）。
 
 ## PPD 选项
 
