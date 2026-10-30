@@ -4,6 +4,8 @@
 #   make test           合成 raster 端到端自测（2 页，含尺寸/DOTCOUNT/往返编码校验）
 #   make test-capture   用 25 个实体机抓包做逐字节回归（最强验证）
 #   make test-pdf       真实 PDF → cgpdftoraster → filter 自测
+#   make test-appctl    打印机管理 CLI（estudioctl）自测（无需 root）
+#   make app            打包「eSTUDIO 打印机管理.app」
 #   sudo make install   安装 filter + PPD
 
 PREFIX      ?= /usr/local
@@ -97,7 +99,9 @@ test-replay: $(FILTER) $(PRNCHECK)
 		-m application/vnd.cups-raster $(TESTDIR)/t1.pdf > $(TESTDIR)/tpl.raster
 	python3 tools/replay.py $(CAPTURES) ./$(FILTER) $(TESTDIR)/tpl.raster
 
-# 真实链路自测：PDF -> cgpdftoraster -> filter
+# 打印机管理 CLI 自测：PATH 桩验证命令构造 / URI 归一化 / 非法输入，不需要 root
+test-appctl:
+	./tools/checkappctl.sh ./scripts/estudioctl.sh
 
 # 真实链路自测：PDF -> cgpdftoraster -> filter
 test-pdf: $(FILTER) $(PRNCHECK)
@@ -113,4 +117,4 @@ test-pdf: $(FILTER) $(PRNCHECK)
 clean:
 	rm -f $(FILTER) $(PRNCHECK) $(MKRASTER)
 
-.PHONY: all install uninstall check test test-capture test-pdf test-options test-replay clean
+.PHONY: all install uninstall check test test-capture test-pdf test-options test-replay test-appctl app clean
